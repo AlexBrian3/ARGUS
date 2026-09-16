@@ -40,8 +40,12 @@ class WinnerAnalyzer:
         # If the database has no historical winners recorded yet, return sensible defaults
         if not all_winners:
             return {
-                "winner_pattern": "Focus on high-leverage sponsor SDK depth with verifiable live demos.",
-                "common_losing_pattern": "Submitting surface-level wrappers with mock data that fail live judge QA.",
+                "total_analyzed": 0,
+                "ai_integration_rate": "N/A",
+                "financial_use_case_rate": "N/A",
+                "average_sponsor_integrations": "N/A",
+                "winner_patterns": ["Focus on high-leverage sponsor SDK depth with verifiable live demos."],
+                "common_losing_patterns": ["Submitting surface-level wrappers with mock data that fail live judge QA."],
                 "oversaturated_ideas": ["Generic AI chatbots", "Basic NFT minters", "Simple ERC20 swap dashboards"],
                 "underexplored_ideas": ["Autonomous agent payment rails (x402)", "Zero-knowledge agent attestation", "Verifiable inference guardrails"],
                 "technologies_to_learn": ["FastAPI SSE streaming", "LiteLLM / vLLM", "Dynamic / World ID embedded SDKs"]
