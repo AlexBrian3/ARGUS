@@ -1,53 +1,69 @@
 """
-Engine 9 — TREND DETECTION
-Detects emerging technical narratives before they saturate:
-- AI Agents & Agent Payments (x402)
-- Verifiable Onchain Inference & TEEs
-- Parallel EVM & Real-Time Settlement
-- ZK Coprocessors & State Attestation
+-------------------------------------------------------------------------------
+ENGINE 9: TREND DETECTION
+-------------------------------------------------------------------------------
+This engine tracks emerging technical narratives BEFORE they become crowded:
+
+- AI Agents onchain (autonomous agent wallets, x402 HTTP micropayments)
+- Verifiable Onchain Inference & TEE Guardrails
+- Parallel EVM high-throughput settlement (Monad, MegaETH)
+- ZK Coprocessors & Cross-Chain State Proofs
 - DePIN & Compute Coordination
 
-Tracks discussion velocity, repository growth, grant capital allocation, and new SDKs.
-Focuses strictly on developer incentives and technical traction, NOT speculative token price.
+Crucial Rule:
+We track developer traction, new SDKs, and grant capital flow —
+NEVER speculative token price movements!
 """
+
 from typing import Dict, List, Any
 from brain.db.database import Database
 
 
 class TrendDetector:
+    """Discovers emerging technical narratives where developer incentives are moving."""
+
     def __init__(self, db: Database = None):
-        self.db = db or Database()
+        self.db = db if db is not None else Database()
 
     def get_narrative_velocity(self) -> List[Dict[str, Any]]:
         """
-        Returns all tracked technical narratives ranked by composite velocity score.
+        Step 1: Returns all technical narratives ranked by composite velocity score.
         """
         return self.db.get_all_trends()
 
     def identify_leading_edges(self) -> List[Dict[str, Any]]:
         """
-        Identifies trends where discussion velocity + grants moving >= 180.0
+        Step 2: Finds trends where both discussion velocity and grant capital flow
+        are at the absolute top tier (total momentum >= 175).
         """
-        trends = self.db.get_all_trends()
-        leading = []
-        for t in trends:
-            total_momentum = t.get("discussion_velocity", 0.0) + t.get("grants_moving", 0.0)
+        all_trends = self.db.get_all_trends()
+        leading_edges = []
+
+        for trend in all_trends:
+            discussion = trend.get("discussion_velocity", 0.0)
+            grants = trend.get("grants_moving", 0.0)
+            total_momentum = discussion + grants
+
             if total_momentum >= 175.0:
-                leading.append(t)
-        return leading
+                leading_edges.append(trend)
+
+        return leading_edges
 
     def assess_trend_relevance(self, project_idea: str) -> Dict[str, Any]:
         """
-        Assesses how well a proposed project aligns with the strongest builder trends.
+        Step 3: Checks how well a proposed project idea aligns with hot builder trends.
         """
-        trends = self.db.get_all_trends()
-        matched = []
-        for t in trends:
-            name_words = set(t["narrative_name"].lower().split())
-            if any(w in project_idea.lower() for w in name_words if len(w) > 3):
-                matched.append(t)
+        all_trends = self.db.get_all_trends()
+        matched_trends = []
+
+        for trend in all_trends:
+            name_words = set(trend["narrative_name"].lower().split())
+            if any(word in project_idea.lower() for word in name_words if len(word) > 3):
+                matched_trends.append(trend)
+
+        alignment_score = min(len(matched_trends) * 35.0, 100.0)
 
         return {
-            "matched_trends": matched,
-            "alignment_score": min(len(matched) * 35.0, 100.0)
+            "matched_trends": matched_trends,
+            "alignment_score": alignment_score
         }

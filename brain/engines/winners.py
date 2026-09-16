@@ -1,32 +1,44 @@
 """
-Engine 4 — HISTORICAL WINNER ANALYSIS
-Analyzes previous winning projects (10-50 projects per ecosystem/event).
-Extracts:
-- WINNER PATTERN
-- COMMON LOSING PATTERN
-- OVERSATURATED IDEAS
-- UNDEREXPLORED IDEAS
-- TECHNOLOGIES TO LEARN BEFORE ENTERING
+-------------------------------------------------------------------------------
+ENGINE 4: HISTORICAL WINNER ANALYSIS
+-------------------------------------------------------------------------------
+This engine studies previous hackathon winners (10 to 50 projects per event).
+
+It reverse-engineers:
+1. WINNING PATTERNS: What made judges pick these projects?
+2. COMMON LOSING PATTERNS: Why did 90% of competitors fail?
+3. OVERSATURATED IDEAS: What is everyone building that judges are tired of seeing?
+4. UNDEREXPLORED IDEAS: The hidden gems where judges give out prizes easily!
+5. TECHNOLOGIES TO LEARN BEFORE ENTERING
 """
-from typing import Dict, List, Any, Optional
+
+from typing import Dict, List, Any
 from brain.db.database import Database
 
 
 class WinnerAnalyzer:
+    """Dissects historical winning and losing projects to find winning recipes."""
+
     def __init__(self, db: Database = None):
-        self.db = db or Database()
+        self.db = db if db is not None else Database()
 
     def analyze_event_patterns(self, event_name: str = None) -> Dict[str, Any]:
         """
-        Synthesizes winner intelligence across historical projects.
+        Step 1: Load past winners from the database and calculate key statistics.
         """
-        winners = self.db.get_all_winners(limit=100)
-        if event_name:
-            filtered = [w for w in winners if event_name.lower() in w["event_name"].lower()]
-            if filtered:
-                winners = filtered
+        all_winners = self.db.get_all_winners(limit=100)
 
-        if not winners:
+        # If user wants to filter by a specific event (e.g. "ETHGlobal" or "Colosseum")
+        if event_name:
+            filtered_winners = [
+                w for w in all_winners
+                if event_name.lower() in w["event_name"].lower()
+            ]
+            if filtered_winners:
+                all_winners = filtered_winners
+
+        # If the database has no historical winners recorded yet, return sensible defaults
+        if not all_winners:
             return {
                 "winner_pattern": "Focus on high-leverage sponsor SDK depth with verifiable live demos.",
                 "common_losing_pattern": "Submitting surface-level wrappers with mock data that fail live judge QA.",
@@ -35,39 +47,56 @@ class WinnerAnalyzer:
                 "technologies_to_learn": ["FastAPI SSE streaming", "LiteLLM / vLLM", "Dynamic / World ID embedded SDKs"]
             }
 
-        # Analyze statistics
-        total = len(winners)
-        ai_count = sum(1 for w in winners if w.get("ai_usage"))
-        fin_count = sum(1 for w in winners if w.get("financial_use_case"))
-        infra_count = sum(1 for w in winners if "infra" in str(w.get("product_category", "")).lower())
-        avg_integrations = sum(w.get("number_of_integrations", 1) for w in winners) / max(total, 1)
+        # ------------------------------------------------------------------- #
+        # Step 2: Compute stats across all analyzed projects                  #
+        # ------------------------------------------------------------------- #
+        total_projects = len(all_winners)
+        ai_projects_count = sum(1 for project in all_winners if project.get("ai_usage"))
+        financial_projects_count = sum(1 for project in all_winners if project.get("financial_use_case"))
+        infra_projects_count = sum(
+            1 for project in all_winners
+            if "infra" in str(project.get("product_category", "")).lower()
+        )
 
-        winning_patterns = [w["winning_patterns"] for w in winners if w.get("winning_patterns")]
-        losing_patterns = [w["losing_patterns_identified"] for w in winners if w.get("losing_patterns_identified")]
+        total_integrations = sum(project.get("number_of_integrations", 1) for project in all_winners)
+        average_integrations = total_integrations / max(total_projects, 1)
 
+        # Collect winning and losing pattern descriptions
+        winning_patterns = [
+            project["winning_patterns"] for project in all_winners
+            if project.get("winning_patterns")
+        ]
+        losing_patterns = [
+            project["losing_patterns_identified"] for project in all_winners
+            if project.get("losing_patterns_identified")
+        ]
+
+        # ------------------------------------------------------------------- #
+        # Step 3: Package into clean, beginner-friendly insights             #
+        # ------------------------------------------------------------------- #
         return {
-            "total_analyzed": total,
-            "ai_integration_rate": f"{round((ai_count / total) * 100)}%",
-            "financial_use_case_rate": f"{round((fin_count / total) * 100)}%",
-            "infrastructure_rate": f"{round((infra_count / total) * 100)}%",
-            "average_sponsor_integrations": round(avg_integrations, 1),
+            "total_analyzed": total_projects,
+            "ai_integration_rate": f"{round((ai_projects_count / total_projects) * 100)}%",
+            "financial_use_case_rate": f"{round((financial_projects_count / total_projects) * 100)}%",
+            "infrastructure_rate": f"{round((infra_projects_count / total_projects) * 100)}%",
+            "average_sponsor_integrations": round(average_integrations, 1),
             "winner_patterns": winning_patterns or [
-                "Deep 2-3 sponsor SDK integration rather than surface-level API calls",
+                "Deep integration with 2-3 sponsor SDKs rather than surface-level API calls",
                 "Asynchronous streaming UI with live execution steppers",
-                "Cryptographic or verifiable proofs backing AI output",
+                "Cryptographic or verifiable proofs backing AI model output",
                 "1-click fail-safe demo presets to survive flaky demo Wi-Fi"
             ],
             "common_losing_patterns": losing_patterns or [
                 "Chatbot wrapper requiring manual wallet popups for every single token or step",
                 "Frontend mockups without working backend endpoints or deployed contracts",
-                "Ignoring sponsor-specific features (e.g. using World without World ID nullifier check)",
+                "Ignoring sponsor-specific features (e.g. using World without World ID nullifiers)",
                 "Submitting to 10 sponsor tracks with zero substantive integration"
             ],
             "oversaturated_ideas": [
                 "Generic Telegram trading bots with basic alerts",
-                "Basic AI portfolio summarizer without autonomous execution",
-                "Single-track NFT / memecoin launchpad clones",
-                "Prompt-to-smart-contract generators with unverified compiler checks"
+                "Basic AI portfolio summarizers without autonomous execution",
+                "Single-track NFT or memecoin launchpad clones",
+                "Prompt-to-smart-contract generators without compiler security checks"
             ],
             "underexplored_ideas": [
                 "Autonomous agent micro-escrows via x402 HTTP 402 payment headers",
