@@ -36,3 +36,6 @@ classifiers = [
 
 [project.scripts]
 argus = "brain.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["brain*"]
