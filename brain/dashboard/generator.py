@@ -11,7 +11,6 @@ from brain.config import DASHBOARD_DIR
 from brain.db.database import Database
 
 DASHBOARD_FILE = DASHBOARD_DIR / "dashboard.html"
-ARTIFACT_DASHBOARD = Path(r"C:\Users\dell\.gemini\antigravity\brain\1c133887-f295-40c1-980a-0e932c368e5d\dashboard.html")
 
 
 def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
@@ -402,13 +401,6 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html_content)
-
-    if ARTIFACT_DASHBOARD.parent.exists():
-        try:
-            with open(ARTIFACT_DASHBOARD, "w", encoding="utf-8") as f:
-                f.write(html_content)
-        except Exception:
-            pass
 
     return output_path
 
