@@ -1,0 +1,24 @@
+# Environment variables and secrets
+.env
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Local databases & test DBs
+*.db
+*.sqlite3
+data/*.db
+brain/tests/*.db
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARGUS — The Hundred-Eyed Builder Intelligence Engine</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      background: var(--background, #090d16);
+      color: var(--foreground, #f3f4f6);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .accent-glow {
+      box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Navigation & Brand Header -->
+    <header class="glass-card rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-blue-500/20 accent-glow">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">👁️</span>
+          <h1 class="text-2xl md:text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
+            ARGUS
+          </h1>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            The Hundred-Eyed Intelligence v1.0
+          </span>
+        </div>
+        <p class="text-sm text-gray-400 mt-1">
+          The giant who never sleeps — high-conviction technical opportunity scout & asymmetric edge discovery engine.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Hourly Radar Active
+        </div>
+        <button onclick="location.reload()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition shadow">
+          Refresh Live
+        </button>
+      </div>
+    </header>
+
+    <!-- Key Metrics Banner -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="glass-card rounded-xl p-4">
+        <div class="text-xs font-medium text-gray-400">Monitored Ecosystems</div>
+        <div class="text-2xl font-bold text-blue-400 mt-1">8</div>
+        <div class="text-xs text-emerald-400 mt-0.5">Top: Solana & Base</div>
+      </div>
+      <div class="glass-card rounded-xl p-4">
+        <div class="text-xs font-medium text-gray-400">Active Opportunities</div>
+        <div class="text-2xl font-bold text-indigo-400 mt-1">5</div>
+        <div class="text-xs text-indigo-300 mt-0.5">$4.7M+ Aggregate Pool</div>
+      </div>
+      <div class="glass-card rounded-xl p-4">
+        <div class="text-xs font-medium text-gray-400">Actionable Edge Alerts</div>
+        <div class="text-2xl font-bold text-emerald-400 mt-1">4</div>
+        <div class="text-xs text-emerald-300 mt-0.5">High Skill-Match & EV</div>
+      </div>
+      <div class="glass-card rounded-xl p-4">
+        <div class="text-xs font-medium text-gray-400">Sponsor Profiles</div>
+        <div class="text-2xl font-bold text-purple-400 mt-1">3</div>
+        <div class="text-xs text-purple-300 mt-0.5">Predictability &gt; 88%</div>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="flex gap-2 border-b border-gray-800 pb-2 overflow-x-auto text-sm">
+      <button onclick="switchTab('edge')" id="tab-edge" class="px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30">
+        🟢 Actionable Edge
+      </button>
+      <button onclick="switchTab('radar')" id="tab-radar" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+        📡 Ecosystem Radar
+      </button>
+      <button onclick="switchTab('sponsors')" id="tab-sponsors" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+        💼 Sponsor Intelligence
+      </button>
+      <button onclick="switchTab('trends')" id="tab-trends" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+        📈 Emerging Trends
+      </button>
+      <button onclick="switchTab('content')" id="tab-content" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+        📱 Content Studio
+      </button>
+    </div>
+
+    <!-- TAB 1: ACTIONABLE EDGE & TOP OPPORTUNITIES -->
+    <section id="content-edge" class="space-y-4">
+      <div class="grid grid-cols-1 gap-4">
+
+        <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-semibold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">🟢 Level 3 — Actionable Edge</span>
+                <span class="text-xs text-gray-400">Colosseum • Solana / Base / Ethereum / Sui / Zcash / Bitcoin / Tempo</span>
+              </div>
+              <h2 class="text-xl font-bold text-gray-100 mt-1">Colosseum Crypto World's Fair 2026</h2>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <div class="text-xs text-gray-400">Total Prize</div>
+                <div class="text-lg font-bold text-emerald-400">$3,340,000</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">HackScore</div>
+                <div class="text-lg font-bold text-blue-400">94.2/100</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">Skill Match</div>
+                <div class="text-lg font-bold text-purple-400">84.7/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratio & EV Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-3 text-xs">
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Est. Serious Builders:</span>
+              <span class="font-bold text-gray-200 ml-1">~616</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Prize-to-Builder Ratio:</span>
+              <span class="font-bold text-emerald-400 ml-1">$5,422.08</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Win Probability:</span>
+              <span class="font-bold text-blue-400 ml-1">45.0%</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Any Reward Probability:</span>
+              <span class="font-bold text-purple-400 ml-1">75.0%</span>
+            </div>
+          </div>
+
+          <!-- Unfair Build Direction -->
+          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+            </div>
+            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+              Unfair Advantage Build: Autonomous Agent x402 Micropayment Gateway.
+Combine your FastAPI high-concurrency engine with an x402 reverse proxy. AI agents querying your endpoints pay micro-tokens per LLM inference call on Solana/Base. Use hackathon-launchpad's dual-pane canvas to show the live payment verification in the left pane and the streaming LLM inference in the right pane.
+            </p>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div>
+              <span class="text-gray-500">Learn NOW:</span>
+              <span class="text-amber-300 font-mono ml-1">Solana Web3.js / Anchor client basics or Python Solana RPC, World ID MiniKit SDK / Coinbase AgentKit Python, HTTP 402 Payment Required header signing & facilitator specs</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Deadline:</span>
+              <span class="text-gray-300 font-medium ml-1">2026-10-12T23:59:59Z</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-semibold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">🟢 Level 3 — Actionable Edge</span>
+                <span class="text-xs text-gray-400">Monad Foundation • Monad</span>
+              </div>
+              <h2 class="text-xl font-bold text-gray-100 mt-1">Monad Metropolis & Nitro Accelerator Cohort 2</h2>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <div class="text-xs text-gray-400">Total Prize</div>
+                <div class="text-lg font-bold text-emerald-400">$750,000</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">HackScore</div>
+                <div class="text-lg font-bold text-blue-400">90.8/100</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">Skill Match</div>
+                <div class="text-lg font-bold text-purple-400">85.2/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratio & EV Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-3 text-xs">
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Est. Serious Builders:</span>
+              <span class="font-bold text-gray-200 ml-1">~266</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Prize-to-Builder Ratio:</span>
+              <span class="font-bold text-emerald-400 ml-1">$2,819.55</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Win Probability:</span>
+              <span class="font-bold text-blue-400 ml-1">45.0%</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Any Reward Probability:</span>
+              <span class="font-bold text-purple-400 ml-1">75.0%</span>
+            </div>
+          </div>
+
+          <!-- Unfair Build Direction -->
+          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+            </div>
+            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+              Unfair Advantage Build for Monad:
+Package your autonomous eval & regression pipeline (DeepEval/Ragas) into a verifiable developer platform with live SSE event telemetry powered by hackathon-launchpad.
+            </p>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div>
+              <span class="text-gray-500">Learn NOW:</span>
+              <span class="text-amber-300 font-mono ml-1">Monad parallel execution RPC and testnet contracts</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Deadline:</span>
+              <span class="text-gray-300 font-medium ml-1">2026-10-31T23:59:59Z</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-semibold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">🟢 Level 3 — Actionable Edge</span>
+                <span class="text-xs text-gray-400">Base Foundation • Base</span>
+              </div>
+              <h2 class="text-xl font-bold text-gray-100 mt-1">Base Retroactive Builder Grants & Base Batches</h2>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <div class="text-xs text-gray-400">Total Prize</div>
+                <div class="text-lg font-bold text-emerald-400">$500,000</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">HackScore</div>
+                <div class="text-lg font-bold text-blue-400">87.8/100</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">Skill Match</div>
+                <div class="text-lg font-bold text-purple-400">82.0/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratio & EV Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-3 text-xs">
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Est. Serious Builders:</span>
+              <span class="font-bold text-gray-200 ml-1">~126</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Prize-to-Builder Ratio:</span>
+              <span class="font-bold text-emerald-400 ml-1">$3,968.25</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Win Probability:</span>
+              <span class="font-bold text-blue-400 ml-1">45.0%</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Any Reward Probability:</span>
+              <span class="font-bold text-purple-400 ml-1">75.0%</span>
+            </div>
+          </div>
+
+          <!-- Unfair Build Direction -->
+          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+            </div>
+            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+              Unfair Advantage Build for Base:
+Package your autonomous eval & regression pipeline (DeepEval/Ragas) into a verifiable developer platform with live SSE event telemetry powered by hackathon-launchpad.
+            </p>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div>
+              <span class="text-gray-500">Learn NOW:</span>
+              <span class="text-amber-300 font-mono ml-1">World ID MiniKit SDK / Coinbase AgentKit Python, HTTP 402 Payment Required header signing & facilitator specs</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Deadline:</span>
+              <span class="text-gray-300 font-medium ml-1">Ongoing / Bi-weekly</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-semibold border border-emerald-500/40 bg-emerald-500/10 text-emerald-300">🟢 Level 3 — Actionable Edge</span>
+                <span class="text-xs text-gray-400">DoraHacks • Multi-chain (EVM, Solana)</span>
+              </div>
+              <h2 class="text-xl font-bold text-gray-100 mt-1">KeeperHub - The Agent Economy Hackathon</h2>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <div class="text-xs text-gray-400">Total Prize</div>
+                <div class="text-lg font-bold text-emerald-400">$65,000</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">HackScore</div>
+                <div class="text-lg font-bold text-blue-400">81.4/100</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">Skill Match</div>
+                <div class="text-lg font-bold text-purple-400">86.0/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratio & EV Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-3 text-xs">
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Est. Serious Builders:</span>
+              <span class="font-bold text-gray-200 ml-1">~78</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Prize-to-Builder Ratio:</span>
+              <span class="font-bold text-emerald-400 ml-1">$833.33</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Win Probability:</span>
+              <span class="font-bold text-blue-400 ml-1">45.0%</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Any Reward Probability:</span>
+              <span class="font-bold text-purple-400 ml-1">75.0%</span>
+            </div>
+          </div>
+
+          <!-- Unfair Build Direction -->
+          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+            </div>
+            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+              Unfair Advantage Build: Autonomous Agent x402 Micropayment Gateway.
+Combine your FastAPI high-concurrency engine with an x402 reverse proxy. AI agents querying your endpoints pay micro-tokens per LLM inference call on Solana/Base. Use hackathon-launchpad's dual-pane canvas to show the live payment verification in the left pane and the streaming LLM inference in the right pane.
+            </p>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div>
+              <span class="text-gray-500">Learn NOW:</span>
+              <span class="text-amber-300 font-mono ml-1">Solana Web3.js / Anchor client basics or Python Solana RPC</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Deadline:</span>
+              <span class="text-gray-300 font-medium ml-1">2026-09-20T23:59:59Z</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2.5 py-0.5 rounded text-xs font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-300">🟠 Level 2 — Confirmed</span>
+                <span class="text-xs text-gray-400">ETHGlobal • Ethereum / L2s (Base, Arbitrum, Optimism)</span>
+              </div>
+              <h2 class="text-xl font-bold text-gray-100 mt-1">ETHGlobal Tokyo 2026</h2>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <div class="text-xs text-gray-400">Total Prize</div>
+                <div class="text-lg font-bold text-emerald-400">$150,000</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">HackScore</div>
+                <div class="text-lg font-bold text-blue-400">81.1/100</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400">Skill Match</div>
+                <div class="text-lg font-bold text-purple-400">65.0/100</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratio & EV Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-3 text-xs">
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Est. Serious Builders:</span>
+              <span class="font-bold text-gray-200 ml-1">~238</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Prize-to-Builder Ratio:</span>
+              <span class="font-bold text-emerald-400 ml-1">$630.25</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Win Probability:</span>
+              <span class="font-bold text-blue-400 ml-1">45.0%</span>
+            </div>
+            <div class="p-2 rounded-lg bg-gray-900/60 border border-gray-800">
+              <span class="text-gray-400">Any Reward Probability:</span>
+              <span class="font-bold text-purple-400 ml-1">75.0%</span>
+            </div>
+          </div>
+
+          <!-- Unfair Build Direction -->
+          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
+            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+            </div>
+            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+              Unfair Advantage Build: Human-Guarded Autonomous Agent Escrow.
+Deploy a LangGraph multi-agent team with NeMo Guardrails that manages onchain treasury or API keys, requiring World ID biometric zero-knowledge proofs only when a spending threshold or anomalous tool call is detected. Pitch it as enterprise agent safety backed by World ID.
+            </p>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+            <div>
+              <span class="text-gray-500">Learn NOW:</span>
+              <span class="text-amber-300 font-mono ml-1">World ID MiniKit SDK / Coinbase AgentKit Python</span>
+            </div>
+            <div>
+              <span class="text-gray-500">Deadline:</span>
+              <span class="text-gray-300 font-medium ml-1">2026-09-27T14:00:00Z</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- TAB 2: ECOSYSTEM RADAR -->
+    <section id="content-radar" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">Ethereum L2</span>
+              <h3 class="text-lg font-bold text-gray-100">Base</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">94.0</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 94.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Leader in onchain consumer and autonomous agent micro-payments (x402, AgentKit, Base Batches, ERC-8021 builder codes).
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">AI x Crypto</span>
+              <h3 class="text-lg font-bold text-gray-100">Decentralized AI (Bittensor / Morpheus / Allora / Sentient)</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">93.0</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 93.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Highest technical synergy with AI Platform Engineers; immense incentive capital moving toward verifiable inference and synthetic evaluation.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">High-Performance L1</span>
+              <h3 class="text-lg font-bold text-gray-100">Solana</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">92.5</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 92.5%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Massive developer flywheel driven by Colosseum Crypto World's Fair ($3.3M pool) and Blinks/Actions adoption.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">Parallel EVM L1</span>
+              <h3 class="text-lg font-bold text-gray-100">Monad</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">88.0</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 88.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Extreme developer anticipation leading up to mainnet; Nitro Accelerator ($500k) and Monad Momentum 1:1 token matching.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">L1 Settlement Layer</span>
+              <h3 class="text-lg font-bold text-gray-100">Ethereum</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">86.0</div>
+              <div class="text-xs font-semibold text-amber-400">Stable →</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 86.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Highest aggregate prize liquidity and sponsor density via ETHGlobal circuits; mature but fiercely competitive.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">Real-Time EVM</span>
+              <h3 class="text-lg font-bold text-gray-100">MegaETH</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">85.0</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 85.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Sub-millisecond latency focus; high dev attention for real-time finance, games, and autonomous agents.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">Move-based L1</span>
+              <h3 class="text-lg font-bold text-gray-100">Sui</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">84.5</div>
+              <div class="text-xs font-semibold text-emerald-400">Accelerating ↑</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 84.5%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Rapidly climbing TVL, object-centric model, included as dedicated track in Colosseum World's Fair.
+          </p>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs font-medium text-gray-400">Ethereum L2</span>
+              <h3 class="text-lg font-bold text-gray-100">Arbitrum</h3>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">82.0</div>
+              <div class="text-xs font-semibold text-amber-400">Stable →</div>
+            </div>
+          </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full" style="width: 82.0%"></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Strong Stylus (Rust/C++ smart contracts) grant incentives and DeFi liquidity foundation.
+          </p>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- TAB 3: SPONSOR INTELLIGENCE -->
+    <section id="content-sponsors" class="hidden space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-100">World (Worldcoin)</h3>
+              <span class="text-xs text-gray-400">World Chain / Ethereum</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Predictability</span>
+              <div class="text-lg font-bold text-emerald-400">94.0/100</div>
+            </div>
+          </div>
+
+          <div class="mt-3 space-y-2 text-xs">
+            <div>
+              <span class="text-gray-400">Recurring Tech:</span>
+              <span class="text-indigo-300 font-mono ml-1">MiniKit SDK, IDKit, World Chain testnet/mainnet, AgentKit</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Winning Products:</span>
+              <span class="text-gray-200 ml-1">Consumer micro-apps with World App mobile UX, Sybil-resistant voting/grant distribution, AI agents backed by verified humans</span>
+            </div>
+            <div>
+              <span class="text-emerald-400">Underserved Ideas:</span>
+              <span class="text-gray-300 ml-1">Agentic micro-escrows where AI agents negotiate on behalf of verified humans, Privacy-preserving reputation portable across L2s using World ID nullifiers</span>
+            </div>
+            <div>
+              <span class="text-rose-400">Oversaturated Ideas:</span>
+              <span class="text-gray-400 ml-1">Generic Sybil-resistant airdrop claimer, Basic one-button World ID gated Discord bot</span>
+            </div>
+          </div>
+
+          <div class="mt-3 p-2.5 rounded bg-gray-900/60 border border-gray-800 text-xs">
+            <span class="text-blue-400 font-semibold">Recommended Prep:</span>
+            <p class="text-gray-300 mt-0.5">Clone MiniKit template, test local World ID simulator, wire AgentKit to an autonomous FastAPI agent.</p>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-100">Pyth Network</h3>
+              <span class="text-xs text-gray-400">Multi-chain (Solana, EVM, Move, Cosmos)</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Predictability</span>
+              <div class="text-lg font-bold text-emerald-400">92.0/100</div>
+            </div>
+          </div>
+
+          <div class="mt-3 space-y-2 text-xs">
+            <div>
+              <span class="text-gray-400">Recurring Tech:</span>
+              <span class="text-indigo-300 font-mono ml-1">@pythnetwork/pyth-evm-js, @pythnetwork/client, Hermes Web Service</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Winning Products:</span>
+              <span class="text-gray-200 ml-1">Sub-second perpetual DEXes, Real-world data prediction markets, Fair automated liquidation protocols</span>
+            </div>
+            <div>
+              <span class="text-emerald-400">Underserved Ideas:</span>
+              <span class="text-gray-300 ml-1">Automated algorithmic trading agents utilizing Pyth low-latency updates + x402 payment execution, Dynamic synthetic risk hedging for GPU compute contracts</span>
+            </div>
+            <div>
+              <span class="text-rose-400">Oversaturated Ideas:</span>
+              <span class="text-gray-400 ml-1">Simple lending pool with Pyth oracle check, Basic coin flip with Pyth Entropy</span>
+            </div>
+          </div>
+
+          <div class="mt-3 p-2.5 rounded bg-gray-900/60 border border-gray-800 text-xs">
+            <span class="text-blue-400 font-semibold">Recommended Prep:</span>
+            <p class="text-gray-300 mt-0.5">Review Pyth Hermes API endpoints; install `@pythnetwork/pyth-evm-js` in backend.</p>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-100">Dynamic</h3>
+              <span class="text-xs text-gray-400">Multi-chain (EVM, Solana, Move)</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Predictability</span>
+              <div class="text-lg font-bold text-emerald-400">89.0/100</div>
+            </div>
+          </div>
+
+          <div class="mt-3 space-y-2 text-xs">
+            <div>
+              <span class="text-gray-400">Recurring Tech:</span>
+              <span class="text-indigo-300 font-mono ml-1">@dynamic-labs/sdk-react-core, @dynamic-labs/ethereum, @dynamic-labs/solana</span>
+            </div>
+            <div>
+              <span class="text-gray-400">Winning Products:</span>
+              <span class="text-gray-200 ml-1">Consumer web apps where users don't realize they are using crypto, Split-key collaborative wallets</span>
+            </div>
+            <div>
+              <span class="text-emerald-400">Underserved Ideas:</span>
+              <span class="text-gray-300 ml-1">Autonomous AI agent delegation where user delegates session keys with strict spending limits via Dynamic</span>
+            </div>
+            <div>
+              <span class="text-rose-400">Oversaturated Ideas:</span>
+              <span class="text-gray-400 ml-1">Standard DeFi swap dashboard with Dynamic login button slapped on top</span>
+            </div>
+          </div>
+
+          <div class="mt-3 p-2.5 rounded bg-gray-900/60 border border-gray-800 text-xs">
+            <span class="text-blue-400 font-semibold">Recommended Prep:</span>
+            <p class="text-gray-300 mt-0.5">Install `@dynamic-labs/sdk-react-core` in frontend boilerplate, set up test API key in dashboard.</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- TAB 4: TRENDS -->
+    <section id="content-trends" class="hidden space-y-4">
+      <div class="grid grid-cols-1 gap-4">
+
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-blue-400 font-semibold">AI x Crypto / Agentic Commerce</span>
+              <h3 class="text-lg font-bold text-gray-100">x402 HTTP Micro-Payments for Autonomous AI Agents</h3>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <span class="text-xs text-gray-400">Discussion Velocity</span>
+                <div class="text-base font-bold text-blue-400">96.0/100</div>
+              </div>
+              <div>
+                <span class="text-xs text-gray-400">Grants Flow</span>
+                <div class="text-base font-bold text-emerald-400">92.0/100</div>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-300 mt-3 leading-relaxed">
+            Standardized activation of HTTP 402 Payment Required for autonomous machine-to-machine commerce. AI agents pay per-request/per-token in under 200ms without human intervention.
+          </p>
+          <div class="mt-3 p-3 rounded bg-emerald-950/20 border border-emerald-500/20 text-xs">
+            <span class="text-emerald-300 font-semibold">⚡ Actionable Implication:</span>
+            <p class="text-gray-200 mt-1">Integrate x402 payment receiver middleware into FastAPI services; judges at Colosseum, ETHGlobal, and Base actively seek implementations moving beyond toy chatbots into autonomous commerce.</p>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-blue-400 font-semibold">Execution Layer Infrastructure</span>
+              <h3 class="text-lg font-bold text-gray-100">Parallel Execution EVM Chains (Monad / MegaETH)</h3>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <span class="text-xs text-gray-400">Discussion Velocity</span>
+                <div class="text-base font-bold text-blue-400">92.0/100</div>
+              </div>
+              <div>
+                <span class="text-xs text-gray-400">Grants Flow</span>
+                <div class="text-base font-bold text-emerald-400">94.0/100</div>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-300 mt-3 leading-relaxed">
+            Pipelined parallel transaction execution achieving 10,000+ TPS and sub-second finality while preserving Ethereum bytecode compatibility.
+          </p>
+          <div class="mt-3 p-3 rounded bg-emerald-950/20 border border-emerald-500/20 text-xs">
+            <span class="text-emerald-300 font-semibold">⚡ Actionable Implication:</span>
+            <p class="text-gray-200 mt-1">Build compute-heavy dapps that were previously impossible on Ethereum (high-frequency orderbooks, real-time agent multi-party games).</p>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-blue-400 font-semibold">AI Infrastructure / Security</span>
+              <h3 class="text-lg font-bold text-gray-100">Verifiable Onchain AI Inference & TEE Guardrails</h3>
+            </div>
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <span class="text-xs text-gray-400">Discussion Velocity</span>
+                <div class="text-base font-bold text-blue-400">89.0/100</div>
+              </div>
+              <div>
+                <span class="text-xs text-gray-400">Grants Flow</span>
+                <div class="text-base font-bold text-emerald-400">90.0/100</div>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-300 mt-3 leading-relaxed">
+            Cryptographic and hardware attestation (TEEs, ZK proofs) proving that an LLM response was generated faithfully by a specific model without tampering.
+          </p>
+          <div class="mt-3 p-3 rounded bg-emerald-950/20 border border-emerald-500/20 text-xs">
+            <span class="text-emerald-300 font-semibold">⚡ Actionable Implication:</span>
+            <p class="text-gray-200 mt-1">Combines Staff AI Platform serving (vLLM, Ray Serve) with cryptographic verification. High grant potential across EigenLayer AVS programs.</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- TAB 5: CONTENT STUDIO -->
+    <section id="content-content" class="hidden space-y-4">
+      <div class="grid grid-cols-1 gap-4">
+
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-purple-400 font-semibold">Social Alpha Opportunity</span>
+              <h3 class="text-lg font-bold text-gray-100">How to Win the $3,340,000 Colosseum Crypto World's Fair 2026 (Playbook)</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Content Potential</span>
+              <div class="text-lg font-bold text-purple-400">88.8/100</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">🧵 X/Twitter 5-Post Thread Draft</div>
+            <div class="space-y-2">
+              <div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>1/ Most developers entering Colosseum Crypto World's Fair 2026 are going to build the exact same 3 things:<br><br>- A generic AI chatbot<br>- A basic trading bot<br>- A toy NFT minter<br><br>Here is how you actually win the $3,340,000 prize pool (backed by real sponsor data): 🧵👇</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>2/ The Math Nobody Looks At:<br><br>Everyone chases total prize pool. But what matters is Prize-to-Competitor Ratio.<br>In Solana / Base / Ethereum / Sui / Zcash / Bitcoin / Tempo, only ~28% of signups actually ship a working demo.<br>That puts the expected value per serious builder at over $5,422.<br><br>This is massively mispriced.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>3/ What Sponsors Repeatedly Reward:<br><br>Looking at previous winners from Solana Foundation, judges don't care about surface-level API calls.<br>They want deep SDK integration:<br>- Autonomous execution (x402 / session keys)<br>- Cryptographic proof of human backing<br>- Live fail-safe streaming UI</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>4/ The Unfair Advantage Build:<br><br>Unfair Advantage Build: Autonomous Agent x402 Micropayment Gateway.<br>Combine your FastAPI high-concurrency engine with an x402 reverse proxy. AI agents querying your endpoints pay micro-tokens per LLM inference call on Solana/Base. Use hacka...<br><br>When judges test 30 projects in 90 minutes, visual execution velocity wins 10 times out of 10.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>5/ If you're building for this, stop starting from scratch.<br><br>Prepare your SDKs right now before registration closes.<br>Bookmark this thread and follow for more under-the-radar builder intelligence.</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-rose-400 mb-1">🎬 TikTok / Reels Script</div>
+              <p class="text-gray-300 leading-relaxed">[HOOK - 0:00-0:05]: Stop entering hackathons blindly. Here is the exact playbook to win the $3,340,000 Colosseum Crypto World's Fair 2026.<br>[POINT 1 - 0:05-0:15]: 90% of competitors will build an AI wrapper. Judges are exhausted by them. The real alpha is in autonomous agent micropayments.<br>[POINT 2 - 0:15-0:30]: The sponsors (Solana Foundation, Base) repeatedly reward teams that use their core primitives in the backend, not just a login button.<br>[ACTION - 0:30-0:45]: Set up your FastAPI SSE streaming pipeline and pre-install the SDKs today. Check the link in bio for the complete winner breakdown.</p>
+            </div>
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-blue-400 mb-1">💼 LinkedIn Thought Leadership</div>
+              <p class="text-gray-300 leading-relaxed">Most engineers approach hackathons and builder programs as code sprints. In reality, they are information-advantage competitions.<br><br>A deep dive into the $3,340,000 Colosseum Crypto World's Fair 2026 across Solana / Base / Ethereum / Sui / Zcash / Bitcoin / Tempo reveals a stark pattern:<br><br>1. Saturated Niches: Surface-level LLM wrappers and basic dashboards.<br>2. Underserved Opportunities: Verifiable inference, autonomous agent micropayments (x402), and guardrail evaluation frameworks.<br>3. High-Leverage Tech: Asynchronous event streaming (SSE), low-latency oracles, and embedded session keys.<br><br>For AI Platform engineers, the highest asymmetric ROI isn't chasing mega-crowded events—it's deploying production-grade systems where your existing platform assets give you an 80% head start.<br><br>#SoftwareEngineering #ArtificialIntelligence #Web3 #DeveloperTools #TechStrategy</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-purple-400 font-semibold">Social Alpha Opportunity</span>
+              <h3 class="text-lg font-bold text-gray-100">How to Win the $500,000 Base Retroactive Builder Grants & Base Batches (Playbook)</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Content Potential</span>
+              <div class="text-lg font-bold text-purple-400">88.8/100</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">🧵 X/Twitter 5-Post Thread Draft</div>
+            <div class="space-y-2">
+              <div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>1/ Most developers entering Base Retroactive Builder Grants & Base Batches are going to build the exact same 3 things:<br><br>- A generic AI chatbot<br>- A basic trading bot<br>- A toy NFT minter<br><br>Here is how you actually win the $500,000 prize pool (backed by real sponsor data): 🧵👇</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>2/ The Math Nobody Looks At:<br><br>Everyone chases total prize pool. But what matters is Prize-to-Competitor Ratio.<br>In Base, only ~28% of signups actually ship a working demo.<br>That puts the expected value per serious builder at over $3,968.<br><br>This is massively mispriced.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>3/ What Sponsors Repeatedly Reward:<br><br>Looking at previous winners from Base, judges don't care about surface-level API calls.<br>They want deep SDK integration:<br>- Autonomous execution (x402 / session keys)<br>- Cryptographic proof of human backing<br>- Live fail-safe streaming UI</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>4/ The Unfair Advantage Build:<br><br>Unfair Advantage Build for Base:<br>Package your autonomous eval & regression pipeline (DeepEval/Ragas) into a verifiable developer platform with live SSE event telemetry powered by hackathon-launchpad....<br><br>When judges test 30 projects in 90 minutes, visual execution velocity wins 10 times out of 10.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>5/ If you're building for this, stop starting from scratch.<br><br>Prepare your SDKs right now before registration closes.<br>Bookmark this thread and follow for more under-the-radar builder intelligence.</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-rose-400 mb-1">🎬 TikTok / Reels Script</div>
+              <p class="text-gray-300 leading-relaxed">[HOOK - 0:00-0:05]: Stop entering hackathons blindly. Here is the exact playbook to win the $500,000 Base Retroactive Builder Grants & Base Batches.<br>[POINT 1 - 0:05-0:15]: 90% of competitors will build an AI wrapper. Judges are exhausted by them. The real alpha is in autonomous agent micropayments.<br>[POINT 2 - 0:15-0:30]: The sponsors (Base, Coinbase Ventures) repeatedly reward teams that use their core primitives in the backend, not just a login button.<br>[ACTION - 0:30-0:45]: Set up your FastAPI SSE streaming pipeline and pre-install the SDKs today. Check the link in bio for the complete winner breakdown.</p>
+            </div>
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-blue-400 mb-1">💼 LinkedIn Thought Leadership</div>
+              <p class="text-gray-300 leading-relaxed">Most engineers approach hackathons and builder programs as code sprints. In reality, they are information-advantage competitions.<br><br>A deep dive into the $500,000 Base Retroactive Builder Grants & Base Batches across Base reveals a stark pattern:<br><br>1. Saturated Niches: Surface-level LLM wrappers and basic dashboards.<br>2. Underserved Opportunities: Verifiable inference, autonomous agent micropayments (x402), and guardrail evaluation frameworks.<br>3. High-Leverage Tech: Asynchronous event streaming (SSE), low-latency oracles, and embedded session keys.<br><br>For AI Platform engineers, the highest asymmetric ROI isn't chasing mega-crowded events—it's deploying production-grade systems where your existing platform assets give you an 80% head start.<br><br>#SoftwareEngineering #ArtificialIntelligence #Web3 #DeveloperTools #TechStrategy</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-purple-400 font-semibold">Social Alpha Opportunity</span>
+              <h3 class="text-lg font-bold text-gray-100">How to Win the $750,000 Monad Metropolis & Nitro Accelerator Cohort 2 (Playbook)</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Content Potential</span>
+              <div class="text-lg font-bold text-purple-400">88.8/100</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">🧵 X/Twitter 5-Post Thread Draft</div>
+            <div class="space-y-2">
+              <div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>1/ Most developers entering Monad Metropolis & Nitro Accelerator Cohort 2 are going to build the exact same 3 things:<br><br>- A generic AI chatbot<br>- A basic trading bot<br>- A toy NFT minter<br><br>Here is how you actually win the $750,000 prize pool (backed by real sponsor data): 🧵👇</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>2/ The Math Nobody Looks At:<br><br>Everyone chases total prize pool. But what matters is Prize-to-Competitor Ratio.<br>In Monad, only ~28% of signups actually ship a working demo.<br>That puts the expected value per serious builder at over $2,820.<br><br>This is massively mispriced.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>3/ What Sponsors Repeatedly Reward:<br><br>Looking at previous winners from Monad Labs, judges don't care about surface-level API calls.<br>They want deep SDK integration:<br>- Autonomous execution (x402 / session keys)<br>- Cryptographic proof of human backing<br>- Live fail-safe streaming UI</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>4/ The Unfair Advantage Build:<br><br>Unfair Advantage Build for Monad:<br>Package your autonomous eval & regression pipeline (DeepEval/Ragas) into a verifiable developer platform with live SSE event telemetry powered by hackathon-launchpad....<br><br>When judges test 30 projects in 90 minutes, visual execution velocity wins 10 times out of 10.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>5/ If you're building for this, stop starting from scratch.<br><br>Prepare your SDKs right now before registration closes.<br>Bookmark this thread and follow for more under-the-radar builder intelligence.</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-rose-400 mb-1">🎬 TikTok / Reels Script</div>
+              <p class="text-gray-300 leading-relaxed">[HOOK - 0:00-0:05]: Stop entering hackathons blindly. Here is the exact playbook to win the $750,000 Monad Metropolis & Nitro Accelerator Cohort 2.<br>[POINT 1 - 0:05-0:15]: 90% of competitors will build an AI wrapper. Judges are exhausted by them. The real alpha is in autonomous agent micropayments.<br>[POINT 2 - 0:15-0:30]: The sponsors (Monad Labs, Dragonfly) repeatedly reward teams that use their core primitives in the backend, not just a login button.<br>[ACTION - 0:30-0:45]: Set up your FastAPI SSE streaming pipeline and pre-install the SDKs today. Check the link in bio for the complete winner breakdown.</p>
+            </div>
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-blue-400 mb-1">💼 LinkedIn Thought Leadership</div>
+              <p class="text-gray-300 leading-relaxed">Most engineers approach hackathons and builder programs as code sprints. In reality, they are information-advantage competitions.<br><br>A deep dive into the $750,000 Monad Metropolis & Nitro Accelerator Cohort 2 across Monad reveals a stark pattern:<br><br>1. Saturated Niches: Surface-level LLM wrappers and basic dashboards.<br>2. Underserved Opportunities: Verifiable inference, autonomous agent micropayments (x402), and guardrail evaluation frameworks.<br>3. High-Leverage Tech: Asynchronous event streaming (SSE), low-latency oracles, and embedded session keys.<br><br>For AI Platform engineers, the highest asymmetric ROI isn't chasing mega-crowded events—it's deploying production-grade systems where your existing platform assets give you an 80% head start.<br><br>#SoftwareEngineering #ArtificialIntelligence #Web3 #DeveloperTools #TechStrategy</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-purple-400 font-semibold">Social Alpha Opportunity</span>
+              <h3 class="text-lg font-bold text-gray-100">How to Win the $150,000 ETHGlobal Tokyo 2026 (Playbook)</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Content Potential</span>
+              <div class="text-lg font-bold text-purple-400">88.8/100</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">🧵 X/Twitter 5-Post Thread Draft</div>
+            <div class="space-y-2">
+              <div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>1/ Most developers entering ETHGlobal Tokyo 2026 are going to build the exact same 3 things:<br><br>- A generic AI chatbot<br>- A basic trading bot<br>- A toy NFT minter<br><br>Here is how you actually win the $150,000 prize pool (backed by real sponsor data): 🧵👇</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>2/ The Math Nobody Looks At:<br><br>Everyone chases total prize pool. But what matters is Prize-to-Competitor Ratio.<br>In Ethereum / L2s (Base, Arbitrum, Optimism), only ~28% of signups actually ship a working demo.<br>That puts the expected value per serious builder at over $630.<br><br>This is massively mispriced.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>3/ What Sponsors Repeatedly Reward:<br><br>Looking at previous winners from World, judges don't care about surface-level API calls.<br>They want deep SDK integration:<br>- Autonomous execution (x402 / session keys)<br>- Cryptographic proof of human backing<br>- Live fail-safe streaming UI</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>4/ The Unfair Advantage Build:<br><br>Unfair Advantage Build: Human-Guarded Autonomous Agent Escrow.<br>Deploy a LangGraph multi-agent team with NeMo Guardrails that manages onchain treasury or API keys, requiring World ID biometric zero-knowledge proofs only when a spending thres...<br><br>When judges test 30 projects in 90 minutes, visual execution velocity wins 10 times out of 10.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>5/ If you're building for this, stop starting from scratch.<br><br>Prepare your SDKs right now before registration closes.<br>Bookmark this thread and follow for more under-the-radar builder intelligence.</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-rose-400 mb-1">🎬 TikTok / Reels Script</div>
+              <p class="text-gray-300 leading-relaxed">[HOOK - 0:00-0:05]: Stop entering hackathons blindly. Here is the exact playbook to win the $150,000 ETHGlobal Tokyo 2026.<br>[POINT 1 - 0:05-0:15]: 90% of competitors will build an AI wrapper. Judges are exhausted by them. The real alpha is in autonomous agent micropayments.<br>[POINT 2 - 0:15-0:30]: The sponsors (World, Base) repeatedly reward teams that use their core primitives in the backend, not just a login button.<br>[ACTION - 0:30-0:45]: Set up your FastAPI SSE streaming pipeline and pre-install the SDKs today. Check the link in bio for the complete winner breakdown.</p>
+            </div>
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-blue-400 mb-1">💼 LinkedIn Thought Leadership</div>
+              <p class="text-gray-300 leading-relaxed">Most engineers approach hackathons and builder programs as code sprints. In reality, they are information-advantage competitions.<br><br>A deep dive into the $150,000 ETHGlobal Tokyo 2026 across Ethereum / L2s (Base, Arbitrum, Optimism) reveals a stark pattern:<br><br>1. Saturated Niches: Surface-level LLM wrappers and basic dashboards.<br>2. Underserved Opportunities: Verifiable inference, autonomous agent micropayments (x402), and guardrail evaluation frameworks.<br>3. High-Leverage Tech: Asynchronous event streaming (SSE), low-latency oracles, and embedded session keys.<br><br>For AI Platform engineers, the highest asymmetric ROI isn't chasing mega-crowded events—it's deploying production-grade systems where your existing platform assets give you an 80% head start.<br><br>#SoftwareEngineering #ArtificialIntelligence #Web3 #DeveloperTools #TechStrategy</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div>
+              <span class="text-xs text-purple-400 font-semibold">Social Alpha Opportunity</span>
+              <h3 class="text-lg font-bold text-gray-100">How to Win the $65,000 KeeperHub - The Agent Economy Hackathon (Playbook)</h3>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-gray-400">Content Potential</span>
+              <div class="text-lg font-bold text-purple-400">88.8/100</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">🧵 X/Twitter 5-Post Thread Draft</div>
+            <div class="space-y-2">
+              <div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>1/ Most developers entering KeeperHub - The Agent Economy Hackathon are going to build the exact same 3 things:<br><br>- A generic AI chatbot<br>- A basic trading bot<br>- A toy NFT minter<br><br>Here is how you actually win the $65,000 prize pool (backed by real sponsor data): 🧵👇</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>2/ The Math Nobody Looks At:<br><br>Everyone chases total prize pool. But what matters is Prize-to-Competitor Ratio.<br>In Multi-chain (EVM, Solana), only ~28% of signups actually ship a working demo.<br>That puts the expected value per serious builder at over $833.<br><br>This is massively mispriced.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>3/ What Sponsors Repeatedly Reward:<br><br>Looking at previous winners from KeeperHub, judges don't care about surface-level API calls.<br>They want deep SDK integration:<br>- Autonomous execution (x402 / session keys)<br>- Cryptographic proof of human backing<br>- Live fail-safe streaming UI</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>4/ The Unfair Advantage Build:<br><br>Unfair Advantage Build: Autonomous Agent x402 Micropayment Gateway.<br>Combine your FastAPI high-concurrency engine with an x402 reverse proxy. AI agents querying your endpoints pay micro-tokens per LLM inference call on Solana/Base. Use hacka...<br><br>When judges test 30 projects in 90 minutes, visual execution velocity wins 10 times out of 10.</div><div class='p-3 bg-gray-900/60 rounded border border-gray-800 text-xs leading-relaxed'>5/ If you're building for this, stop starting from scratch.<br><br>Prepare your SDKs right now before registration closes.<br>Bookmark this thread and follow for more under-the-radar builder intelligence.</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-rose-400 mb-1">🎬 TikTok / Reels Script</div>
+              <p class="text-gray-300 leading-relaxed">[HOOK - 0:00-0:05]: Stop entering hackathons blindly. Here is the exact playbook to win the $65,000 KeeperHub - The Agent Economy Hackathon.<br>[POINT 1 - 0:05-0:15]: 90% of competitors will build an AI wrapper. Judges are exhausted by them. The real alpha is in autonomous agent micropayments.<br>[POINT 2 - 0:15-0:30]: The sponsors (KeeperHub, Dora Grant DAO) repeatedly reward teams that use their core primitives in the backend, not just a login button.<br>[ACTION - 0:30-0:45]: Set up your FastAPI SSE streaming pipeline and pre-install the SDKs today. Check the link in bio for the complete winner breakdown.</p>
+            </div>
+            <div class="p-3 bg-gray-900/60 rounded border border-gray-800">
+              <div class="font-semibold text-blue-400 mb-1">💼 LinkedIn Thought Leadership</div>
+              <p class="text-gray-300 leading-relaxed">Most engineers approach hackathons and builder programs as code sprints. In reality, they are information-advantage competitions.<br><br>A deep dive into the $65,000 KeeperHub - The Agent Economy Hackathon across Multi-chain (EVM, Solana) reveals a stark pattern:<br><br>1. Saturated Niches: Surface-level LLM wrappers and basic dashboards.<br>2. Underserved Opportunities: Verifiable inference, autonomous agent micropayments (x402), and guardrail evaluation frameworks.<br>3. High-Leverage Tech: Asynchronous event streaming (SSE), low-latency oracles, and embedded session keys.<br><br>For AI Platform engineers, the highest asymmetric ROI isn't chasing mega-crowded events—it's deploying production-grade systems where your existing platform assets give you an 80% head start.<br><br>#SoftwareEngineering #ArtificialIntelligence #Web3 #DeveloperTools #TechStrategy</p>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    function switchTab(tabName) {
+      const tabs = ['edge', 'radar', 'sponsors', 'trends', 'content'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const sec = document.getElementById('content-' + t);
+        if (t === tabName) {
+          btn.className = 'px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30';
+          sec.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200';
+          sec.classList.add('hidden');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

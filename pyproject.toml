@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "argus-builder-brain"
+version = "1.0.0"
+description = "The hundred-eyed builder intelligence engine that never sleeps. Information advantage for hackathons, bounties, and grants."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Brian Omoregie", email = "brianomoregie07@gmail.com" }
+]
+keywords = [
+    "hackathons",
+    "bounties",
+    "grants",
+    "web3",
+    "ai-agents",
+    "intelligence-engine",
+    "solana",
+    "base",
+    "monad"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[project.scripts]
+argus = "brain.cli:main"
