@@ -63,11 +63,14 @@ def is_configured() -> bool:
     return bool(BOT_TOKEN) and bool(CHAT_ID)
 
 
-def send_message(text: str, parse_mode: str = "HTML", disable_preview: bool = True) -> bool:
+def send_message(text: str, parse_mode: str = "HTML", disable_preview: bool = True, max_retries: int = 3) -> bool:
     """
     Sends a message to your Telegram chat.
     Splits long messages automatically to fit Telegram's 4,096 character limit.
+    Includes automated retries with backoff in case of network blips.
     """
+    import time
+
     if not is_configured():
         print("[TELEGRAM] Bot is not configured. Add credentials to your .env file.")
         return False
@@ -76,33 +79,43 @@ def send_message(text: str, parse_mode: str = "HTML", disable_preview: bool = Tr
     all_succeeded = True
 
     for chunk in message_chunks:
-        try:
-            payload = {
-                "chat_id": CHAT_ID,
-                "text": chunk,
-                "parse_mode": parse_mode,
-                "disable_web_page_preview": disable_preview
-            }
-            json_data = json.dumps(payload).encode("utf-8")
+        payload = {
+            "chat_id": CHAT_ID,
+            "text": chunk,
+            "parse_mode": parse_mode,
+            "disable_web_page_preview": disable_preview
+        }
+        json_data = json.dumps(payload).encode("utf-8")
 
-            request = urllib.request.Request(
-                f"{TELEGRAM_API_URL}/sendMessage",
-                data=json_data,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
+        chunk_sent = False
+        for attempt in range(1, max_retries + 1):
+            try:
+                request = urllib.request.Request(
+                    f"{TELEGRAM_API_URL}/sendMessage",
+                    data=json_data,
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
 
-            with urllib.request.urlopen(request, timeout=15) as response:
-                result = json.loads(response.read().decode("utf-8"))
-                if not result.get("ok"):
-                    print(f"[TELEGRAM] API error: {result}")
-                    all_succeeded = False
+                # Generous 30-second timeout to handle slow Wi-Fi
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    result = json.loads(response.read().decode("utf-8"))
+                    if result.get("ok"):
+                        chunk_sent = True
+                        break
+                    else:
+                        print(f"[TELEGRAM] API error on attempt {attempt}: {result}")
 
-        except urllib.error.URLError as error:
-            print(f"[TELEGRAM] Network error: {error}")
-            all_succeeded = False
-        except Exception as error:
-            print(f"[TELEGRAM] Unexpected error: {error}")
+            except urllib.error.URLError as error:
+                print(f"[TELEGRAM] Network warning (attempt {attempt}/{max_retries}): {error}")
+            except Exception as error:
+                print(f"[TELEGRAM] Unexpected error (attempt {attempt}/{max_retries}): {error}")
+
+            # Brief pause before retrying
+            if attempt < max_retries:
+                time.sleep(2 * attempt)
+
+        if not chunk_sent:
             all_succeeded = False
 
     return all_succeeded
@@ -187,37 +200,55 @@ def format_hourly_summary(
     total_scanned: int,
     edge_count: int,
     new_alerts: List[Dict[str, Any]],
-    top_opportunities: List[Dict[str, Any]]
+    top_opportunities: List[Dict[str, Any]],
+    top_ecosystems: List[Dict[str, Any]] = None
 ) -> str:
-    """Formats a concise digest for the hourly scanner."""
+    """Formats a rich, actionable hourly pulse message for Telegram."""
+    import datetime
+    current_time = datetime.datetime.now().strftime("%H:%M")
+
     header = (
-        f"<b>👁️ ARGUS — HOURLY INTELLIGENCE</b>\n"
+        f"<b>👁️ ARGUS — HOURLY PULSE ({current_time})</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"Scanned: {total_scanned} opportunities\n"
-        f"Active Edge Alerts: {edge_count}\n"
+        f"🔍 Scanned: <b>{total_scanned} opportunities</b>\n"
+        f"🟢 Active Edge: <b>{edge_count} high-EV targets</b>\n"
     )
 
-    if not new_alerts and not top_opportunities:
-        return header + "\nNo material changes this cycle. Standing by."
-
     body = ""
+
+    # Section 1: Any brand-new alerts triggered in this cycle
     if new_alerts:
-        body += "\n<b>🆕 New Alerts This Cycle:</b>\n"
-        for alert in new_alerts[:5]:
+        body += "\n<b>🚨 New Alerts This Cycle:</b>\n"
+        for alert in new_alerts[:3]:
             level = alert.get("alert_level", 2)
             icon = "🟢" if level == 3 else ("🔴" if level == 1 else "🟠")
-            body += f"  {icon} {_esc(alert.get('title', '')[:80])}\n"
+            body += f"  {icon} <b>{_esc(alert.get('title', '')[:65])}</b>\n"
 
+    # Section 2: Top Active Edge Opportunities with HackScore
     if top_opportunities:
-        body += "\n<b>🏆 Top Opportunities:</b>\n"
-        for opp in top_opportunities[:5]:
+        body += "\n<b>🎯 Top Priority Opportunities:</b>\n"
+        for opp in top_opportunities[:4]:
+            name = opp.get("name", "")[:32]
+            prize = opp.get("total_prize_usd", 0)
+            hack_score = opp.get("hack_score", 0)
+            skill = opp.get("skill_match_score", 0)
+            deadline = opp.get("submission_deadline", "TBD")
             body += (
-                f"  • <b>{_esc(opp.get('name', '')[:40])}</b> "
-                f"— ${opp.get('total_prize_usd', 0):,.0f} "
-                f"(HS: {opp.get('hack_score', 0):.0f})\n"
+                f"  • <b>{_esc(name)}</b>\n"
+                f"    💰 ${prize:,.0f} | 🎯 HS: {hack_score:.0f} | 🔧 Fit: {skill:.0f}%\n"
+                f"    ⏰ Deadline: {_esc(str(deadline))}\n"
             )
 
-    return header + body
+    # Section 3: Ecosystem Radar highlights
+    if top_ecosystems:
+        body += "\n<b>📡 Top Accelerating Ecosystems:</b>\n"
+        accel = [e for e in top_ecosystems if "↑" in e.get("momentum_trajectory", "")]
+        for eco in (accel[:3] if accel else top_ecosystems[:3]):
+            body += f"  • <b>{_esc(eco.get('name', ''))}</b>: {eco.get('momentum_score', 0):.1f} {eco.get('momentum_trajectory', '↑')}\n"
+
+    footer = "\n<i>All systems operational · Dashboard updated</i>"
+
+    return header + body + footer
 
 
 def _esc(text: str) -> str:

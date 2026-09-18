@@ -136,13 +136,29 @@ class ArgusDaemon:
             print("[ALERT SELECTIVITY] No material changes requiring notification this cycle.")
 
         # ------------------------------------------------------------------- #
-        # Step 3: Dispatch to Telegram if alerts exist                        #
+        # Step 3: Dispatch to Telegram (High-Priority Cards + Hourly Pulse)   #
         # ------------------------------------------------------------------- #
         all_opportunities = self.db.get_all_opportunities(limit=25)
-        if alerts_this_cycle:
-            self._dispatch_telegram_alerts(alerts_this_cycle, all_opportunities)
+        top_ecosystems = self.radar.get_leaderboard()
+        edge_count = sum(1 for opp in all_opportunities if opp.get("alert_level") == 3)
+
+        if self.telegram_ready:
+            # 3A: If brand-new individual alerts were detected, send their cards
+            if alerts_this_cycle:
+                self._dispatch_telegram_alerts(alerts_this_cycle, all_opportunities)
+
+            # 3B: Always send the Hourly Pulse so you stay updated on your phone!
+            pulse_message = telegram_bot.format_hourly_summary(
+                total_scanned=scout_result["total_opportunities_scanned"],
+                edge_count=edge_count,
+                new_alerts=alerts_this_cycle,
+                top_opportunities=all_opportunities[:4],
+                top_ecosystems=top_ecosystems[:3]
+            )
+            telegram_bot.send_message(pulse_message)
+            print("[TELEGRAM] Hourly Pulse delivered successfully to your phone.")
         else:
-            print("[TELEGRAM] Silent cycle — keeping your phone quiet.")
+            print("[TELEGRAM] Telegram not configured. Skipping phone dispatch.")
 
         # ------------------------------------------------------------------- #
         # Step 4: Refresh Generative UI Dashboard                             #
@@ -156,7 +172,7 @@ class ArgusDaemon:
             "opportunities_scanned": scout_result["total_opportunities_scanned"],
             "new_alerts_this_cycle": len(alerts_this_cycle),
             "actionable_edge_count": len(edge_alerts),
-            "telegram_dispatched": self.telegram_ready and len(alerts_this_cycle) > 0,
+            "telegram_dispatched": self.telegram_ready,
             "dashboard_path": str(dashboard_path)
         }
 
