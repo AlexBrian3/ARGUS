@@ -23,6 +23,52 @@ class PersistentMemory:
     def __init__(self, db: Database = None):
         self.db = db if db is not None else Database()
 
+    def _get_ecosystem_context(self, ecosystem: str) -> Any:
+        """Shared helper: looks up the ecosystem momentum card for an ecosystem string."""
+        primary_ecosystem = (ecosystem or "").lower().split("/")[0].strip()
+        return self.db.get_ecosystem(primary_ecosystem)
+
+    def _match_sponsors(self, sponsor_names: List[str]) -> List[Dict[str, Any]]:
+        """Shared helper: matches raw sponsor name strings against saved Sponsor Intelligence Cards."""
+        matched_sponsors = []
+        all_sponsors = self.db.get_all_sponsors()
+
+        for sponsor_name in (sponsor_names or []):
+            clean_name = sponsor_name.lower().replace(" ", "-").replace("(", "").replace(")", "")
+            for s in all_sponsors:
+                if s["slug"] in clean_name or clean_name in s["slug"] or s["name"].lower() in sponsor_name.lower():
+                    matched_sponsors.append(s)
+                    break
+
+        return matched_sponsors
+
+    def get_context_for_raw_opportunity(self, ecosystem: str, sponsors: List[str]) -> Dict[str, Any]:
+        """
+        Looks up real ecosystem momentum and sponsor predictability scores from
+        persistent memory for an opportunity that hasn't been saved to the database
+        yet. Used by the Opportunity Scout (Engine 1) while it's still scoring a
+        fresh opportunity, so HackScore reflects actual historical intelligence
+        instead of a flat default.
+        """
+        ecosystem_card = self._get_ecosystem_context(ecosystem)
+        matched_sponsors = self._match_sponsors(sponsors)
+
+        ecosystem_momentum = ecosystem_card["momentum_score"] if ecosystem_card else None
+
+        if matched_sponsors:
+            sponsor_predictability = sum(
+                s["predictability_score"] for s in matched_sponsors
+            ) / len(matched_sponsors)
+        else:
+            sponsor_predictability = None
+
+        return {
+            "ecosystem_context": ecosystem_card,
+            "sponsor_cards": matched_sponsors,
+            "ecosystem_momentum": ecosystem_momentum,
+            "sponsor_predictability": sponsor_predictability
+        }
+
     def query_intelligence_for_opportunity(self, opp_slug: str) -> Dict[str, Any]:
         """
         Step 1: Pull together all historical intelligence for a target opportunity.
@@ -34,21 +80,12 @@ class PersistentMemory:
         # ------------------------------------------------------------------- #
         # Step 2: Fetch ecosystem momentum context                            #
         # ------------------------------------------------------------------- #
-        primary_ecosystem = opportunity.get("ecosystem", "").lower().split("/")[0].strip()
-        ecosystem_card = self.db.get_ecosystem(primary_ecosystem)
+        ecosystem_card = self._get_ecosystem_context(opportunity.get("ecosystem", ""))
 
         # ------------------------------------------------------------------- #
         # Step 3: Find matching Sponsor Intelligence Cards                    #
         # ------------------------------------------------------------------- #
-        matched_sponsors = []
-        all_sponsors = self.db.get_all_sponsors()
-
-        for sponsor_name in opportunity.get("sponsors", []):
-            clean_name = sponsor_name.lower().replace(" ", "-").replace("(", "").replace(")", "")
-            for s in all_sponsors:
-                if s["slug"] in clean_name or clean_name in s["slug"] or s["name"].lower() in sponsor_name.lower():
-                    matched_sponsors.append(s)
-                    break
+        matched_sponsors = self._match_sponsors(opportunity.get("sponsors", []))
 
         # ------------------------------------------------------------------- #
         # Step 4: Find historical winners from this organizer or event        #
