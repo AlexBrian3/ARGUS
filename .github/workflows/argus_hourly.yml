@@ -1,0 +1,33 @@
+name: ARGUS 24/7 Cloud Engine
+
+# Runs every hour in GitHub's cloud — even when your PC is completely turned off!
+on:
+  schedule:
+    # Runs at the top of every hour (00:00, 01:00, 02:00, etc. UTC)
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub web interface anytime
+
+jobs:
+  hourly_intelligence_scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout ARGUS Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🌱 Initialize Database & Seed Baseline Intelligence
+        run: |
+          python -m brain.db.seed
+
+      - name: 👁️ Execute ARGUS Hourly Intelligence Cycle & Send Telegram Update
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python -m brain.daemon
