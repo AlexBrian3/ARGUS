@@ -175,6 +175,39 @@ class OpportunityScorer:
         learning_score = (cutting_edge_learning_value / 100.0) * 5.0
 
         # ------------------------------------------------------------------- #
+        # Scale every factor to match HACKSCORE_WEIGHTS from config.py        #
+        # ------------------------------------------------------------------- #
+        # Each factor above is calculated on its default max (shown in the
+        # comments), so if someone edits HACKSCORE_WEIGHTS in config.py to
+        # rebalance how much a factor matters, that change actually takes
+        # effect here instead of being silently ignored.
+        default_max_points = {
+            "reward_quality": 20.0,
+            "competition_attractiveness": 20.0,
+            "skill_fit": 15.0,
+            "sponsor_history": 10.0,
+            "ecosystem_momentum": 10.0,
+            "prize_breadth": 10.0,
+            "participation_rewards": 5.0,
+            "startup_potential": 5.0,
+            "portfolio_value": 5.0
+        }
+
+        def scaled(factor_name: str, raw_points: float) -> float:
+            configured_max = HACKSCORE_WEIGHTS.get(factor_name, default_max_points[factor_name])
+            return raw_points * (configured_max / default_max_points[factor_name])
+
+        reward_quality = scaled("reward_quality", reward_quality)
+        comp_score = scaled("competition_attractiveness", comp_score)
+        skill_fit = scaled("skill_fit", skill_fit)
+        sponsor_score = scaled("sponsor_history", sponsor_score)
+        momentum_score = scaled("ecosystem_momentum", momentum_score)
+        prize_breadth = scaled("prize_breadth", prize_breadth)
+        participation_score = scaled("participation_rewards", participation_score)
+        startup_score = scaled("startup_potential", startup_score)
+        learning_score = scaled("portfolio_value", learning_score)
+
+        # ------------------------------------------------------------------- #
         # Final Total: Sum all 9 factors (Clamped between 0.0 and 100.0)      #
         # ------------------------------------------------------------------- #
         total_hack_score = (
