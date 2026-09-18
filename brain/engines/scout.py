@@ -19,6 +19,7 @@ from brain.engines.scoring import OpportunityScorer
 from brain.engines.user_fit import UserFitEngine
 from brain.engines.alerts import AlertEngine
 from brain.engines.content import SocialContentEngine
+from brain.engines.memory import PersistentMemory
 
 
 class OpportunityScout:
@@ -30,6 +31,7 @@ class OpportunityScout:
         self.user_fit = UserFitEngine()
         self.alert_engine = AlertEngine(self.db)
         self.content_engine = SocialContentEngine(self.db)
+        self.memory = PersistentMemory(self.db)
 
     def process_raw_opportunity(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -50,7 +52,17 @@ class OpportunityScout:
         skill_match = fit_analysis["skill_match"]
 
         # ------------------------------------------------------------------- #
-        # Step 2: Compute HackScore (Engine 5)                                #
+        # Step 2: Pull real Sponsor & Ecosystem intelligence (Engine 10)      #
+        # ------------------------------------------------------------------- #
+        # Looks up this opportunity's actual sponsors and ecosystem in
+        # persistent memory, so scoring reflects real predictability and
+        # momentum data instead of a flat default for every opportunity.
+        memory_context = self.memory.get_context_for_raw_opportunity(ecosystem, sponsors)
+        sponsor_predictability = memory_context["sponsor_predictability"]
+        ecosystem_momentum = memory_context["ecosystem_momentum"]
+
+        # ------------------------------------------------------------------- #
+        # Step 3: Compute HackScore (Engine 5)                                #
         # ------------------------------------------------------------------- #
         num_tracks = len(raw_data.get("tracks", [])) or 4
         has_rewards = bool(raw_data.get("participation_rewards"))
@@ -59,7 +71,7 @@ class OpportunityScout:
             "seed" in str(raw_data.get("prize_breakdown", "")).lower()
         )
 
-        scoring_result = self.scorer.calculate_hack_score(
+        scoring_kwargs = dict(
             prize_usd=prize_usd,
             expected_competitors=expected_competitors,
             skill_fit_score=skill_match,
@@ -67,11 +79,20 @@ class OpportunityScout:
             has_participation_rewards=has_rewards,
             is_accelerator_or_vc_backed=is_vc_backed
         )
+        # Only override the defaults when memory actually has data for this
+        # opportunity's sponsors/ecosystem; otherwise let calculate_hack_score
+        # fall back to its own defaults.
+        if sponsor_predictability is not None:
+            scoring_kwargs["sponsor_predictability"] = sponsor_predictability
+        if ecosystem_momentum is not None:
+            scoring_kwargs["ecosystem_momentum"] = ecosystem_momentum
+
+        scoring_result = self.scorer.calculate_hack_score(**scoring_kwargs)
 
         hack_score = scoring_result["hack_score"]
 
         # ------------------------------------------------------------------- #
-        # Step 3: Determine Alert Level (Engine 7)                            #
+        # Step 4: Determine Alert Level (Engine 7)                            #
         # ------------------------------------------------------------------- #
         if hack_score >= 75.0 and skill_match >= 70.0:
             alert_level = 3  # Level 3: Actionable Edge!
@@ -114,12 +135,12 @@ class OpportunityScout:
         }
 
         # ------------------------------------------------------------------- #
-        # Step 4: Save to SQLite Database (Engine 10)                         #
+        # Step 5: Save to SQLite Database (Engine 10)                         #
         # ------------------------------------------------------------------- #
         self.db.upsert_opportunity(clean_record)
 
         # ------------------------------------------------------------------- #
-        # Step 5: Check Alerts & Draft Content if High Score                  #
+        # Step 6: Check Alerts & Draft Content if High Score                  #
         # ------------------------------------------------------------------- #
         self.alert_engine.evaluate_opportunity_alerts(clean_record)
 
