@@ -68,7 +68,11 @@ class SocialContentEngine:
         ecosystem = opportunity.get("ecosystem", "")
         total_prize = opportunity.get("total_prize_usd", 0)
         sponsors = opportunity.get("sponsors", [])
-        build_direction = opportunity.get("recommended_build_direction", "")
+        raw_build = opportunity.get("recommended_build_direction")
+        if isinstance(raw_build, dict):
+            build_direction = raw_build.get("your_unfair_advantage_build") or raw_build.get("what_everyone_else_will_build") or ""
+        else:
+            build_direction = str(raw_build or "")
         prize_ratio = opportunity.get("prize_to_competitor_ratio", 1200)
 
         potential_score = self.calculate_content_potential()

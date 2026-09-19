@@ -30,6 +30,8 @@ from brain.engines.scout import OpportunityScout
 from brain.engines.radar import EcosystemRadar
 from brain.engines.alerts import AlertEngine
 from brain.engines.content import SocialContentEngine
+from brain.engines.benefits import BenefitsTracker
+from brain.engines.jobs import JobsScout
 from brain.dashboard.generator import generate_dashboard_html
 from brain import telegram_bot
 
@@ -44,6 +46,8 @@ class ArgusDaemon:
         self.radar = EcosystemRadar(self.db)
         self.alert_engine = AlertEngine(self.db)
         self.content_engine = SocialContentEngine(self.db)
+        self.benefits_tracker = BenefitsTracker(self.db)
+        self.jobs_scout = JobsScout(self.db)
 
         # Check if Telegram credentials are set up
         self.telegram_ready = telegram_bot.is_configured()
@@ -112,9 +116,16 @@ class ArgusDaemon:
         print(f"[DAEMON] Opportunities evaluated: {scout_result['total_opportunities_scanned']}")
 
         # ------------------------------------------------------------------- #
+        # Step 1B: Scan Fresh Job Listings for First Signal Alerts (Engine 13)#
+        # ------------------------------------------------------------------- #
+        job_alerts = self.jobs_scout.scan_and_alert_fresh_jobs()
+        if job_alerts:
+            print(f"[DAEMON] 💼 Dispatched {len(job_alerts)} fresh job alerts!")
+
+        # ------------------------------------------------------------------- #
         # Step 2: Check for newly triggered alerts in this cycle              #
         # ------------------------------------------------------------------- #
-        recent_alerts = self.alert_engine.get_recent_alerts(limit=10)
+        recent_alerts = self.alert_engine.get_recent_alerts(limit=15)
         cutoff_time = datetime.datetime.now() - datetime.timedelta(minutes=65)
 
         alerts_this_cycle = []
@@ -141,6 +152,9 @@ class ArgusDaemon:
         all_opportunities = self.db.get_all_opportunities(limit=25)
         top_ecosystems = self.radar.get_leaderboard()
         edge_count = sum(1 for opp in all_opportunities if opp.get("alert_level") == 3)
+        promoted_ecosystems = [e for e in top_ecosystems if e.get("momentum_score", 0) >= 70][:2]
+        fresh_jobs = self.jobs_scout.get_fresh_listings(hours=24)
+        top_benefits = self.benefits_tracker.get_ranked_benefits()
 
         if self.telegram_ready:
             # 3A: If brand-new individual alerts were detected, send their cards
@@ -152,8 +166,11 @@ class ArgusDaemon:
                 total_scanned=scout_result["total_opportunities_scanned"],
                 edge_count=edge_count,
                 new_alerts=alerts_this_cycle,
-                top_opportunities=all_opportunities[:4],
-                top_ecosystems=top_ecosystems[:3]
+                top_opportunities=all_opportunities[:3],
+                top_ecosystems=top_ecosystems[:3],
+                promoted_ecosystems=promoted_ecosystems,
+                fresh_jobs=fresh_jobs,
+                top_benefits=top_benefits
             )
             telegram_bot.send_message(pulse_message)
             print("[TELEGRAM] Hourly Pulse delivered successfully to your phone.")

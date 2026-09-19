@@ -162,6 +162,21 @@ def format_actionable_edge(opportunity: Dict[str, Any]) -> str:
     build_direction = opportunity.get("recommended_build_direction", "")
     techs_to_learn = opportunity.get("technologies_to_learn", [])
 
+    if isinstance(build_direction, dict):
+        everyone = build_direction.get("what_everyone_else_will_build", "Generic boilerplate CRUD or basic AI wrapper.")
+        advantage = build_direction.get("your_unfair_advantage_build", "Deep infrastructure / autonomous agent integration.")
+        build_text = (
+            f"<b>👥 What Everyone Else Will Build:</b>\n"
+            f"<i>{_esc(everyone[:250])}</i>\n\n"
+            f"<b>⚡ Your Unfair Advantage Build:</b>\n"
+            f"<i>{_esc(advantage[:350])}</i>"
+        )
+    else:
+        build_text = (
+            f"<b>⚡ Unfair Advantage Build:</b>\n"
+            f"<i>{_esc(str(build_direction)[:500])}</i>"
+        )
+
     return (
         f"<b>🟢 LEVEL 3 — ACTIONABLE EDGE</b>\n\n"
         f"<b>{_esc(name)}</b>\n"
@@ -172,9 +187,33 @@ def format_actionable_edge(opportunity: Dict[str, Any]) -> str:
         f"📊 $/Serious Builder: <b>${ratio:,.0f}</b>\n"
         f"📈 Win Prob: <b>{prob_place*100:.0f}%</b> · Any Reward: <b>{prob_any*100:.0f}%</b>\n"
         f"⏰ Deadline: <b>{_esc(str(deadline))}</b>\n\n"
-        f"<b>⚡ Unfair Advantage Build:</b>\n"
-        f"<i>{_esc(build_direction[:500])}</i>\n\n"
+        f"{build_text}\n\n"
         f"<b>🛠 Learn NOW:</b> {_esc(', '.join(techs_to_learn))}"
+    )
+
+
+def format_fresh_job_alert(job: Dict[str, Any]) -> str:
+    """Formats a Level 1 First Signal alert for ultra-fresh (<24h) high-fit job listings."""
+    title = job.get("title", "Unknown Role")
+    company = job.get("company", "Web3 Team")
+    ecosystem = job.get("ecosystem", "Web3")
+    match_score = job.get("skill_match_score", 0.0)
+    compensation = job.get("compensation", "Competitive")
+    location = job.get("location", "Remote")
+    source = job.get("source", "radar")
+    apply_url = job.get("apply_url", "#")
+    desc = job.get("description", "")
+
+    return (
+        f"<b>🔥 LEVEL 1 — FRESH JOB FIRST SIGNAL (&lt;24H)</b>\n\n"
+        f"<b>{_esc(title)}</b>\n"
+        f"🏢 {_esc(company)} · {_esc(ecosystem)}\n\n"
+        f"🎯 Skill Match: <b>{match_score:.0f}%</b>\n"
+        f"💰 Compensation: <b>{_esc(compensation)}</b>\n"
+        f"📍 Location: {_esc(location)}\n"
+        f"🌐 Source: {_esc(source)}\n\n"
+        f"<b>Role Overview:</b>\n<i>{_esc(desc[:320])}</i>\n\n"
+        f"🔗 <a href='{apply_url}'>Apply Immediately ↗</a>"
     )
 
 
@@ -201,7 +240,10 @@ def format_hourly_summary(
     edge_count: int,
     new_alerts: List[Dict[str, Any]],
     top_opportunities: List[Dict[str, Any]],
-    top_ecosystems: List[Dict[str, Any]] = None
+    top_ecosystems: List[Dict[str, Any]] = None,
+    promoted_ecosystems: List[Dict[str, Any]] = None,
+    fresh_jobs: List[Dict[str, Any]] = None,
+    top_benefits: List[Dict[str, Any]] = None
 ) -> str:
     """Formats a rich, actionable hourly pulse message for Telegram."""
     import datetime
@@ -227,7 +269,7 @@ def format_hourly_summary(
     # Section 2: Top Active Edge Opportunities with HackScore
     if top_opportunities:
         body += "\n<b>🎯 Top Priority Opportunities:</b>\n"
-        for opp in top_opportunities[:4]:
+        for opp in top_opportunities[:3]:
             name = opp.get("name", "")[:32]
             prize = opp.get("total_prize_usd", 0)
             hack_score = opp.get("hack_score", 0)
@@ -239,7 +281,25 @@ def format_hourly_summary(
                 f"    ⏰ Deadline: {_esc(str(deadline))}\n"
             )
 
-    # Section 3: Ecosystem Radar highlights
+    # Section 3: Promoted Ecosystems (Engine 11)
+    if promoted_ecosystems:
+        body += "\n<b>🚀 Promoted Ecosystems (Engine 11):</b>\n"
+        for pe in promoted_ecosystems[:2]:
+            body += f"  • <b>{_esc(pe.get('name', ''))}</b>: Promoted to <i>{_esc(pe.get('maturity_stage', ''))}</i> (Momentum {pe.get('momentum_score', 0):.1f})\n"
+
+    # Section 4: Fresh Web3/AI Jobs (Engine 13)
+    if fresh_jobs:
+        body += "\n<b>🔥 Fresh Roles (&lt;24h) (Engine 13):</b>\n"
+        for fj in fresh_jobs[:2]:
+            body += f"  • <b>{_esc(fj.get('title', ''))}</b> @ {_esc(fj.get('company', ''))} ({fj.get('skill_match_score', 0):.0f}% fit)\n"
+
+    # Section 5: Top Standing Benefits/Perks (Engine 12)
+    if top_benefits:
+        body += "\n<b>🎁 Top Benefit / Grant (Engine 12):</b>\n"
+        for tb in top_benefits[:1]:
+            body += f"  • <b>{_esc(tb.get('title', ''))}</b> (${tb.get('amount_usd', 0):,} USD · {_esc(tb.get('ecosystem', ''))})\n"
+
+    # Section 6: Ecosystem Radar highlights
     if top_ecosystems:
         body += "\n<b>📡 Top Accelerating Ecosystems:</b>\n"
         accel = [e for e in top_ecosystems if "↑" in e.get("momentum_trajectory", "")]

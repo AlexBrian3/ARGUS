@@ -3,12 +3,14 @@
 CREATE TABLE IF NOT EXISTS ecosystems (
     slug TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    category TEXT NOT NULL, -- L1, L2, AIxCrypto, ZK, Privacy, etc.
+    category TEXT NOT NULL, -- L1, L2, Bitcoin L2, Decentralized AI / Compute, AI Agent Infrastructure, etc.
     momentum_score REAL NOT NULL DEFAULT 0.0,
     momentum_trajectory TEXT NOT NULL DEFAULT '→', -- ↑, →, ↓
     breakdown_scores TEXT NOT NULL DEFAULT '{}', -- JSON breakdown
     tracked_repos TEXT NOT NULL DEFAULT '[]', -- JSON array of GitHub repos
     notes TEXT,
+    maturity_stage TEXT NOT NULL DEFAULT 'established', -- watchlist, emerging, established
+    first_detected TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -168,6 +170,36 @@ CREATE TABLE IF NOT EXISTS trends (
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS benefits (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    ecosystem TEXT NOT NULL,
+    benefit_type TEXT NOT NULL, -- grant, fellowship, accelerator, retroactive_funding, gas_credit, other
+    typical_amount_usd REAL DEFAULT 0.0,
+    rolling_or_deadline TEXT NOT NULL DEFAULT 'rolling',
+    eligibility_notes TEXT,
+    application_url TEXT,
+    first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_verified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS job_listings (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    company TEXT NOT NULL,
+    ecosystem_or_category TEXT NOT NULL,
+    role_type TEXT NOT NULL, -- internship, entry_level, full_time, fellowship, contract
+    location TEXT,
+    remote INTEGER DEFAULT 1,
+    compensation_notes TEXT,
+    first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    application_deadline TEXT,
+    url TEXT,
+    skill_tags TEXT NOT NULL DEFAULT '[]', -- JSON list
+    freshness_alert_sent INTEGER DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS user_profiles (
     id TEXT PRIMARY KEY,
     role TEXT NOT NULL,
@@ -183,3 +215,8 @@ CREATE INDEX IF NOT EXISTS idx_opp_ecosystem ON opportunities(ecosystem);
 CREATE INDEX IF NOT EXISTS idx_opp_status ON opportunities(status);
 CREATE INDEX IF NOT EXISTS idx_alerts_level ON alerts(alert_level);
 CREATE INDEX IF NOT EXISTS idx_sponsors_pred ON sponsors(predictability_score DESC);
+CREATE INDEX IF NOT EXISTS idx_ecosystems_stage ON ecosystems(maturity_stage);
+CREATE INDEX IF NOT EXISTS idx_benefits_ecosystem ON benefits(ecosystem);
+CREATE INDEX IF NOT EXISTS idx_benefits_type ON benefits(benefit_type);
+CREATE INDEX IF NOT EXISTS idx_jobs_role ON job_listings(role_type);
+CREATE INDEX IF NOT EXISTS idx_jobs_freshness ON job_listings(freshness_alert_sent, first_seen DESC);

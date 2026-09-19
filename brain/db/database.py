@@ -24,15 +24,26 @@ class Database:
         return conn
 
     def init_db(self):
-        """Initialize tables using schema.sql and populate default user profile if empty."""
+        """Initialize tables using schema.sql, run migrations, and populate default user profile if empty."""
         with open(SCHEMA_FILE, "r", encoding="utf-8") as f:
             schema_sql = f.read()
 
         with self.get_connection() as conn:
+            # Check if existing database needs schema migration before executing schema_sql
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ecosystems'")
+            if cursor.fetchone():
+                cursor.execute("PRAGMA table_info(ecosystems)")
+                columns = [row["name"] for row in cursor.fetchall()]
+                if "maturity_stage" not in columns:
+                    conn.execute("ALTER TABLE ecosystems ADD COLUMN maturity_stage TEXT NOT NULL DEFAULT 'established'")
+                if "first_detected" not in columns:
+                    conn.execute("ALTER TABLE ecosystems ADD COLUMN first_detected TIMESTAMP DEFAULT '2026-01-01 00:00:00'")
+                conn.commit()
+
             conn.executescript(schema_sql)
 
             # Check if default user profile exists
-            cursor = conn.cursor()
             cursor.execute("SELECT id FROM user_profiles WHERE id = 'default'")
             if not cursor.fetchone():
                 cursor.execute(
@@ -50,13 +61,20 @@ class Database:
                 )
             conn.commit()
 
-    # --- Ecosystems (Engine 2) ---
+    # --- Ecosystems (Engine 2 & Engine 11: Ecosystem Discovery) ---
     def upsert_ecosystem(self, data: Dict[str, Any]):
         with self.get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO ecosystems (slug, name, category, momentum_score, momentum_trajectory, breakdown_scores, tracked_repos, notes, last_updated)
-                VALUES (:slug, :name, :category, :momentum_score, :momentum_trajectory, :breakdown_scores, :tracked_repos, :notes, CURRENT_TIMESTAMP)
+                INSERT INTO ecosystems (
+                    slug, name, category, momentum_score, momentum_trajectory,
+                    breakdown_scores, tracked_repos, notes, maturity_stage, first_detected, last_updated
+                )
+                VALUES (
+                    :slug, :name, :category, :momentum_score, :momentum_trajectory,
+                    :breakdown_scores, :tracked_repos, :notes, :maturity_stage,
+                    COALESCE(:first_detected, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP
+                )
                 ON CONFLICT(slug) DO UPDATE SET
                     name=excluded.name,
                     category=excluded.category,
@@ -65,6 +83,7 @@ class Database:
                     breakdown_scores=excluded.breakdown_scores,
                     tracked_repos=excluded.tracked_repos,
                     notes=excluded.notes,
+                    maturity_stage=excluded.maturity_stage,
                     last_updated=CURRENT_TIMESTAMP
                 """,
                 {
@@ -75,7 +94,9 @@ class Database:
                     "momentum_trajectory": data.get("momentum_trajectory", "→"),
                     "breakdown_scores": json.dumps(data.get("breakdown_scores", {})),
                     "tracked_repos": json.dumps(data.get("tracked_repos", [])),
-                    "notes": data.get("notes", "")
+                    "notes": data.get("notes", ""),
+                    "maturity_stage": data.get("maturity_stage", "established"),
+                    "first_detected": data.get("first_detected")
                 }
             )
 
@@ -83,6 +104,22 @@ class Database:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM ecosystems ORDER BY momentum_score DESC")
+            rows = cursor.fetchall()
+            result = []
+            for r in rows:
+                item = dict(r)
+                item["breakdown_scores"] = json.loads(item["breakdown_scores"] or "{}")
+                item["tracked_repos"] = json.loads(item["tracked_repos"] or "[]")
+                result.append(item)
+            return result
+
+    def get_ecosystems_by_stage(self, stage: str) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM ecosystems WHERE maturity_stage = ? ORDER BY momentum_score DESC",
+                (stage.lower(),)
+            )
             rows = cursor.fetchall()
             result = []
             for r in rows:
@@ -289,7 +326,7 @@ class Database:
                     "source_tier": data.get("source_tier", "Tier 2"),
                     "source_url": data.get("source_url", ""),
                     "tags": json.dumps(data.get("tags", [])),
-                    "recommended_build_direction": data.get("recommended_build_direction", ""),
+                    "recommended_build_direction": json.dumps(data["recommended_build_direction"]) if isinstance(data.get("recommended_build_direction"), dict) else str(data.get("recommended_build_direction", "")),
                     "technologies_to_learn": json.dumps(data.get("technologies_to_learn", []))
                 }
             )
@@ -304,6 +341,13 @@ class Database:
                 item = dict(r)
                 for json_col in ["prize_breakdown", "tracks", "sponsors", "score_breakdown", "tags", "technologies_to_learn"]:
                     item[json_col] = json.loads(item[json_col] or ("{}" if "breakdown" in json_col else "[]"))
+                # Parse recommended_build_direction if JSON
+                rbd = item.get("recommended_build_direction", "")
+                if rbd and rbd.startswith("{") and "what_everyone_else_will_build" in rbd:
+                    try:
+                        item["recommended_build_direction"] = json.loads(rbd)
+                    except Exception:
+                        pass
                 result.append(item)
             return result
 
@@ -317,11 +361,31 @@ class Database:
             item = dict(row)
             for json_col in ["prize_breakdown", "tracks", "sponsors", "score_breakdown", "tags", "technologies_to_learn"]:
                 item[json_col] = json.loads(item[json_col] or ("{}" if "breakdown" in json_col else "[]"))
+            # Parse recommended_build_direction if JSON
+            rbd = item.get("recommended_build_direction", "")
+            if rbd and rbd.startswith("{") and "what_everyone_else_will_build" in rbd:
+                try:
+                    item["recommended_build_direction"] = json.loads(rbd)
+                except Exception:
+                    pass
             return item
 
     # --- Winners (Engine 4) ---
     def insert_winner(self, data: Dict[str, Any]):
         with self.get_connection() as conn:
+            cursor = conn.cursor()
+            opp_id = data.get("opportunity_id")
+            if opp_id:
+                cursor.execute("SELECT id FROM opportunities WHERE id = ?", (opp_id,))
+                row = cursor.fetchone()
+                if not row:
+                    cursor.execute("SELECT id FROM opportunities WHERE slug = ?", (opp_id,))
+                    row = cursor.fetchone()
+                    if row:
+                        opp_id = row["id"]
+                    else:
+                        opp_id = None
+
             conn.execute(
                 """
                 INSERT INTO winners (
@@ -345,7 +409,7 @@ class Database:
                 """,
                 {
                     "id": data["id"],
-                    "opportunity_id": data.get("opportunity_id"),
+                    "opportunity_id": opp_id,
                     "event_name": data["event_name"],
                     "project_name": data["project_name"],
                     "category": data.get("category", "General"),
@@ -486,20 +550,13 @@ class Database:
         with self.get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO trends (
+                INSERT OR REPLACE INTO trends (
                     id, narrative_name, category, discussion_velocity, repository_growth,
                     grants_moving, description, key_ecosystems, actionable_implications, last_updated
                 ) VALUES (
                     :id, :narrative_name, :category, :discussion_velocity, :repository_growth,
                     :grants_moving, :description, :key_ecosystems, :actionable_implications, CURRENT_TIMESTAMP
-                ) ON CONFLICT(narrative_name) DO UPDATE SET
-                    discussion_velocity=excluded.discussion_velocity,
-                    repository_growth=excluded.repository_growth,
-                    grants_moving=excluded.grants_moving,
-                    description=excluded.description,
-                    key_ecosystems=excluded.key_ecosystems,
-                    actionable_implications=excluded.actionable_implications,
-                    last_updated=CURRENT_TIMESTAMP
+                )
                 """,
                 {
                     "id": data["id"],
@@ -525,3 +582,160 @@ class Database:
                 item["key_ecosystems"] = json.loads(item["key_ecosystems"] or "[]")
                 result.append(item)
             return result
+
+    # --- Benefits & Perks (Engine 12) ---
+    def upsert_benefit(self, data: Dict[str, Any]):
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO benefits (
+                    id, name, provider, ecosystem, benefit_type, typical_amount_usd,
+                    rolling_or_deadline, eligibility_notes, application_url, first_seen, last_verified
+                ) VALUES (
+                    :id, :name, :provider, :ecosystem, :benefit_type, :typical_amount_usd,
+                    :rolling_or_deadline, :eligibility_notes, :application_url,
+                    COALESCE(:first_seen, CURRENT_TIMESTAMP), CURRENT_TIMESTAMP
+                ) ON CONFLICT(id) DO UPDATE SET
+                    name=excluded.name,
+                    provider=excluded.provider,
+                    ecosystem=excluded.ecosystem,
+                    benefit_type=excluded.benefit_type,
+                    typical_amount_usd=excluded.typical_amount_usd,
+                    rolling_or_deadline=excluded.rolling_or_deadline,
+                    eligibility_notes=excluded.eligibility_notes,
+                    application_url=excluded.application_url,
+                    last_verified=CURRENT_TIMESTAMP
+                """,
+                {
+                    "id": data.get("id") or data.get("slug") or f"benefit_{data.get('name', 'item').lower().replace(' ', '_')}",
+                    "name": data.get("name") or data.get("title", "Standing Benefit"),
+                    "provider": data.get("provider") or data.get("ecosystem", "Ecosystem Foundation"),
+                    "ecosystem": data.get("ecosystem", "Multi-chain"),
+                    "benefit_type": data.get("benefit_type") or data.get("category", "grant"),
+                    "typical_amount_usd": float(data.get("typical_amount_usd") if data.get("typical_amount_usd") is not None else data.get("amount_usd", 0.0)),
+                    "rolling_or_deadline": data.get("rolling_or_deadline", "rolling"),
+                    "eligibility_notes": data.get("eligibility_notes") or data.get("description") or data.get("eligibility", ""),
+                    "application_url": data.get("application_url", ""),
+                    "first_seen": data.get("first_seen")
+                }
+            )
+
+    def get_all_benefits(self) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM benefits ORDER BY typical_amount_usd DESC")
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_benefits_for_ecosystem(self, ecosystem: str) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            pattern = f"%{ecosystem.lower()}%"
+            cursor.execute(
+                "SELECT * FROM benefits WHERE LOWER(ecosystem) LIKE ? OR LOWER(provider) LIKE ? ORDER BY typical_amount_usd DESC",
+                (pattern, pattern)
+            )
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_benefit(self, benefit_id: str) -> Optional[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM benefits WHERE id = ? OR LOWER(id) = LOWER(?)", (benefit_id, benefit_id))
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute("SELECT * FROM benefits WHERE LOWER(name) LIKE ?", (f"%{benefit_id.lower()}%",))
+                row = cursor.fetchone()
+            if not row:
+                return None
+            res = dict(row)
+            res["slug"] = res.get("id")
+            res["title"] = res.get("name")
+            res["amount_usd"] = res.get("typical_amount_usd", 0)
+            res["description"] = res.get("eligibility_notes", "")
+            res["eligibility"] = res.get("eligibility_notes", "")
+            return res
+
+    # --- Jobs & Internships Scout (Engine 13) ---
+    def upsert_job_listing(self, data: Dict[str, Any]):
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO job_listings (
+                    id, title, company, ecosystem_or_category, role_type, location,
+                    remote, compensation_notes, first_seen, application_deadline, url,
+                    skill_tags, freshness_alert_sent
+                ) VALUES (
+                    :id, :title, :company, :ecosystem_or_category, :role_type, :location,
+                    :remote, :compensation_notes, COALESCE(:first_seen, CURRENT_TIMESTAMP),
+                    :application_deadline, :url, :skill_tags, :freshness_alert_sent
+                ) ON CONFLICT(id) DO UPDATE SET
+                    title=excluded.title,
+                    company=excluded.company,
+                    ecosystem_or_category=excluded.ecosystem_or_category,
+                    role_type=excluded.role_type,
+                    location=excluded.location,
+                    remote=excluded.remote,
+                    compensation_notes=excluded.compensation_notes,
+                    application_deadline=excluded.application_deadline,
+                    url=excluded.url,
+                    skill_tags=excluded.skill_tags,
+                    freshness_alert_sent=excluded.freshness_alert_sent
+                """,
+                {
+                    "id": data["id"],
+                    "title": data["title"],
+                    "company": data["company"],
+                    "ecosystem_or_category": data.get("ecosystem_or_category", "Web3"),
+                    "role_type": data.get("role_type", "full_time"),
+                    "location": data.get("location", "Remote"),
+                    "remote": 1 if data.get("remote", True) else 0,
+                    "compensation_notes": data.get("compensation_notes", "Competitive"),
+                    "first_seen": data.get("first_seen"),
+                    "application_deadline": data.get("application_deadline", ""),
+                    "url": data.get("url", ""),
+                    "skill_tags": json.dumps(data.get("skill_tags", [])),
+                    "freshness_alert_sent": 1 if data.get("freshness_alert_sent") else 0
+                }
+            )
+
+    def get_all_job_listings(self, limit: int = 100) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM job_listings ORDER BY first_seen DESC LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+            result = []
+            for r in rows:
+                item = dict(r)
+                item["skill_tags"] = json.loads(item["skill_tags"] or "[]")
+                item["remote"] = bool(item["remote"])
+                item["freshness_alert_sent"] = bool(item["freshness_alert_sent"])
+                result.append(item)
+            return result
+
+    def get_fresh_job_listings(self, hours: int = 24) -> List[Dict[str, Any]]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT * FROM job_listings
+                WHERE datetime(first_seen) >= datetime('now', ?)
+                ORDER BY first_seen DESC
+                """,
+                (f"-{hours} hours",)
+            )
+            rows = cursor.fetchall()
+            result = []
+            for r in rows:
+                item = dict(r)
+                item["skill_tags"] = json.loads(item["skill_tags"] or "[]")
+                item["remote"] = bool(item["remote"])
+                item["freshness_alert_sent"] = bool(item["freshness_alert_sent"])
+                result.append(item)
+            return result
+
+    def mark_job_alert_sent(self, job_id: str):
+        with self.get_connection() as conn:
+            conn.execute(
+                "UPDATE job_listings SET freshness_alert_sent = 1 WHERE id = ?",
+                (job_id,)
+            )
+

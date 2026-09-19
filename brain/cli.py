@@ -8,6 +8,9 @@ Available Commands:
     python -m brain.cli scan                       # Run full intelligence scan
     python -m brain.cli edge                       # Show top Actionable Edge opportunities
     python -m brain.cli radar                      # View Ecosystem Momentum Leaderboard
+    python -m brain.cli ecosystems [--stage stage] # View ecosystems by stage (watchlist/emerging/established)
+    python -m brain.cli benefits [slug]            # View standing grants, perks, gas credits
+    python -m brain.cli jobs [--fresh]             # View fresh Web3/AI engineering jobs & internships
     python -m brain.cli sponsor [slug]             # View Sponsor Intelligence Cards
     python -m brain.cli winners                    # Study winning vs losing patterns
     python -m brain.cli opportunities              # List all scored opportunities
@@ -34,6 +37,8 @@ from brain.engines.winners import WinnerAnalyzer
 from brain.engines.scout import OpportunityScout
 from brain.engines.content import SocialContentEngine
 from brain.engines.trends import TrendDetector
+from brain.engines.benefits import BenefitsTracker
+from brain.engines.jobs import JobsScout
 from brain.dashboard.generator import generate_dashboard_html
 
 
@@ -195,7 +200,13 @@ def cmd_edge(args):
         print(f"   Probability of Placing: {op['prob_placing']*100:.1f}% | Probability of Any Reward: {op['prob_any_reward']*100:.1f}%")
         print(f"   HACKSCORE: {op['hack_score']}/100 | SKILL MATCH: {op['skill_match_score']}/100")
         print(f"   Deadline: {op['submission_deadline']}")
-        print(f"   Actionable Build Direction:\n   {op['recommended_build_direction']}")
+        direction = op.get("recommended_build_direction")
+        if isinstance(direction, dict):
+            print("   Actionable Build Direction:")
+            print(f"     • What everyone else will build: {direction.get('what_everyone_else_will_build')}")
+            print(f"     • Your unfair advantage build  : {direction.get('your_unfair_advantage_build')}")
+        else:
+            print(f"   Actionable Build Direction:\n   {direction}")
         print(f"   Technologies to Learn NOW: {', '.join(op['technologies_to_learn'])}")
 
     print("\n" + "=" * 88 + "\n")
@@ -355,6 +366,114 @@ def cmd_telegram(args):
 
 
 # --------------------------------------------------------------------------- #
+#                        COMMAND 11: ECOSYSTEMS DISCOVERY                     #
+# --------------------------------------------------------------------------- #
+
+def cmd_ecosystems(args):
+    """Displays ecosystems filtered by maturity stage (watchlist, emerging, established)."""
+    db = Database()
+    radar = EcosystemRadar(db)
+    stage = getattr(args, "stage", None)
+    ecosystems = radar.get_ecosystems_by_stage(stage)
+
+    stage_title = stage.upper() if stage else "ALL MATURITY STAGES"
+    print("\n" + "=" * 88)
+    print(f" 🌐 ECOSYSTEM DISCOVERY RADAR — {stage_title}")
+    print("=" * 88)
+    print(f"{'Ecosystem':<24} | {'Stage':<12} | {'Category':<20} | {'Momentum':<8}")
+    print("-" * 88)
+
+    for eco in ecosystems:
+        stage_badge = eco.get("maturity_stage", "established")
+        print(f"{eco['name']:<24} | {stage_badge:<12} | {eco['category']:<20} | {eco['momentum_score']:<8.1f}")
+        if eco.get("notes"):
+            print(f"   ↳ Notes: {eco['notes']}")
+
+    print("=" * 88 + "\n")
+
+
+# --------------------------------------------------------------------------- #
+#                        COMMAND 12: BENEFITS & PERKS                         #
+# --------------------------------------------------------------------------- #
+
+def cmd_benefits(args):
+    """Displays standing grants, gas credits, and foundation perks ranked by user fit."""
+    db = Database()
+    tracker = BenefitsTracker(db)
+
+    if getattr(args, "slug", None):
+        # Look up specific benefit
+        benefit = db.get_benefit(args.slug)
+        if not benefit:
+            print(f"[!] Benefit '{args.slug}' was not found in database.")
+            return
+
+        category = benefit.get('category') or benefit.get('benefit_type', 'grant')
+        print("\n" + "=" * 80)
+        print(f" 🎁 BENEFIT INTELLIGENCE CARD: {benefit['title'].upper()}")
+        print("=" * 80)
+        print(f"Ecosystem     : {benefit['ecosystem']}")
+        print(f"Category      : {category}")
+        print(f"Amount        : ${benefit['amount_usd']:,} USD")
+        print(f"Application   : {benefit.get('application_url', 'N/A')}")
+        print("-" * 80)
+        print(f"Description   :\n{benefit.get('description', 'N/A')}")
+        print(f"\nEligibility   :\n{benefit.get('eligibility', 'N/A')}")
+        print("=" * 80 + "\n")
+    else:
+        ranked = tracker.get_ranked_benefits()
+        print("\n" + "=" * 88)
+        print(" 🎁 STANDING BENEFITS & PERKS (RANKED BY USER FIT)")
+        print("=" * 88)
+        print(f"{'Title':<30} | {'Ecosystem':<16} | {'Category':<14} | {'Amount':<10} | {'Fit Score'}")
+        print("-" * 88)
+        for b in ranked:
+            amt_str = f"${b.get('amount_usd', 0):,}"
+            cat_str = b.get('category') or b.get('benefit_type', 'grant')
+            title_str = b.get('title') or b.get('name', 'Benefit')
+            eco_str = b.get('ecosystem', 'Web3')
+            print(f"{title_str[:30]:<30} | {eco_str[:16]:<16} | {cat_str[:14]:<14} | {amt_str:<10} | {b.get('user_fit_score', 0):.1f}/100")
+        print("=" * 88 + "\n")
+
+
+# --------------------------------------------------------------------------- #
+#                        COMMAND 13: JOBS & INTERNSHIPS                       #
+# --------------------------------------------------------------------------- #
+
+def cmd_jobs(args):
+    """Displays fresh Web3/AI engineering jobs and internships ranked by user skills."""
+    db = Database()
+    scout = JobsScout(db)
+    is_fresh = getattr(args, "fresh", False)
+
+    if is_fresh:
+        jobs = scout.get_fresh_listings(hours=24)
+        header_title = "FRESH ROLES (LAST 24 HOURS)"
+    else:
+        jobs = scout.get_all_ranked_listings()
+        header_title = "ALL OPEN ROLES (RANKED BY SKILL FIT)"
+
+    print("\n" + "=" * 92)
+    print(f" 💼 JOBS & INTERNSHIPS SCOUT — {header_title}")
+    print("=" * 92)
+    print(f"{'Role':<32} | {'Company':<18} | {'Ecosystem':<14} | {'Match':<8} | {'Source'}")
+    print("-" * 92)
+
+    if not jobs:
+        print("  No listings found matching your criteria.")
+    else:
+        for j in jobs:
+            match_str = f"{j.get('skill_match_score', 0):.0f}%"
+            eco_str = j.get('ecosystem') or j.get('ecosystem_or_category', 'Web3')
+            comp_str = j.get('compensation') or j.get('compensation_notes', 'Competitive')
+            apply_str = j.get('apply_url') or j.get('url', 'N/A')
+            print(f"{j['title'][:32]:<32} | {j['company'][:18]:<18} | {eco_str[:14]:<14} | {match_str:<8} | {j.get('source', 'radar')}")
+            print(f"   ↳ Compensation: {comp_str} | Apply: {apply_str}")
+
+    print("=" * 92 + "\n")
+
+
+# --------------------------------------------------------------------------- #
 #                        MAIN ARGPARSE ROUTER                                 #
 # --------------------------------------------------------------------------- #
 
@@ -367,6 +486,18 @@ def main():
 
     # Command: radar
     subparsers.add_parser("radar", help="View Ecosystem Momentum Radar")
+
+    # Command: ecosystems
+    p_eco = subparsers.add_parser("ecosystems", help="View ecosystems by maturity stage (watchlist, emerging, established)")
+    p_eco.add_argument("--stage", choices=["watchlist", "emerging", "established"], help="Filter by maturity stage")
+
+    # Command: benefits
+    p_ben = subparsers.add_parser("benefits", help="View standing ecosystem grants, credits, and perks")
+    p_ben.add_argument("slug", nargs="?", help="Specific benefit slug to view in detail")
+
+    # Command: jobs
+    p_job = subparsers.add_parser("jobs", help="View Web3/AI engineering jobs and internships")
+    p_job.add_argument("--fresh", action="store_true", help="Filter for roles posted in the last 24 hours")
 
     # Command: sponsor
     p_sp = subparsers.add_parser("sponsor", help="View Sponsor Intelligence Cards")
@@ -411,6 +542,9 @@ def main():
 
     commands = {
         "radar": cmd_radar,
+        "ecosystems": cmd_ecosystems,
+        "benefits": cmd_benefits,
+        "jobs": cmd_jobs,
         "sponsor": cmd_sponsor,
         "winners": cmd_winners,
         "opportunities": cmd_opportunities,

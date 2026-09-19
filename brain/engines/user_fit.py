@@ -142,26 +142,53 @@ class UserFitEngine:
         name_lower = name.lower()
 
         if "colosseum" in name_lower or "solana" in ecosystem_lower:
-            direction = (
-                "Unfair Advantage Build: Autonomous Agent x402 Micropayment Gateway.\n"
-                "Combine your FastAPI high-concurrency engine with an x402 reverse proxy. "
-                "AI agents querying your endpoints pay micro-tokens per LLM inference call on Solana/Base. "
-                "Use hackathon-launchpad's dual-pane canvas to show the live payment verification in the left pane "
-                "and the streaming LLM inference in the right pane."
+            everyone_else = (
+                "A generic Telegram trading bot with basic price alerts or a toy token launchpad."
+            )
+            your_edge = (
+                "Autonomous Agent x402 Micropayment Gateway: Combine your FastAPI high-concurrency engine "
+                "with an x402 reverse proxy. AI agents querying your endpoints pay micro-tokens per LLM inference call "
+                "on Solana/Base. Use hackathon-launchpad's dual-pane canvas to show live transaction proofs on the left "
+                "and streaming LLM token generation on the right."
             )
         elif "world" in sponsors_str or "ethglobal" in name_lower:
-            direction = (
-                "Unfair Advantage Build: Human-Guarded Autonomous Agent Escrow.\n"
-                "Deploy a LangGraph multi-agent team with NeMo Guardrails that manages onchain treasury or API keys, "
-                "requiring World ID biometric zero-knowledge proofs only when a spending threshold or anomalous tool call is detected. "
-                "Pitch it as enterprise agent safety backed by World ID."
+            everyone_else = (
+                "A simple World ID login button or generic proof-of-humanity voting mockup."
+            )
+            your_edge = (
+                "Human-Guarded Autonomous Agent Escrow: Deploy a LangGraph multi-agent team with NeMo Guardrails "
+                "managing onchain treasuries, requiring World ID nullifier biometric proofs only when spending limits "
+                "or anomalous tool calls trigger escalation. Deep integration with World ID MiniKit."
+            )
+        elif "monad" in ecosystem_lower or "nitro" in name_lower:
+            everyone_else = (
+                "A standard Uniswap v2 fork or basic EVM contract re-deployed on testnet with no performance differentiation."
+            )
+            your_edge = (
+                "Parallel EVM High-Throughput Model Benchmarking: Exploit Monad's 10,000 TPS parallel state execution "
+                "to run continuous verifiable agent evaluations using Ragas/DeepEval with real-time SSE telemetry."
+            )
+        elif "base" in ecosystem_lower:
+            everyone_else = (
+                "A basic NFT frame or simple social tipping bot with mock transaction confirmations."
+            )
+            your_edge = (
+                "Verifiable Agentic Commerce Hub: Use Coinbase AgentKit and ERC-8021 builder codes with an autonomous "
+                "semantic evaluation cache, routing high-frequency micro-settlements across Base."
             )
         else:
-            direction = (
-                f"Unfair Advantage Build for {ecosystem}:\n"
-                "Package your autonomous eval & regression pipeline (DeepEval/Ragas) into a verifiable developer platform "
-                "with live SSE event telemetry powered by hackathon-launchpad."
+            everyone_else = (
+                f"Surface-level wrapper or basic dashboard on {ecosystem} without deep backend integration or verifiable logic."
             )
+            your_edge = (
+                f"Production Developer Infrastructure for {ecosystem}: Package your autonomous eval & regression pipeline "
+                f"(DeepEval/Ragas) into a verifiable developer platform with live SSE telemetry powered by hackathon-launchpad."
+            )
+
+        structured_build_direction = {
+            "what_everyone_else_will_build": everyone_else,
+            "your_unfair_advantage_build": your_edge
+        }
 
         return {
             "skill_match": skill_match,
@@ -170,5 +197,5 @@ class UserFitEngine:
             "technologies_understood": technologies_understood,
             "technologies_to_learn": technologies_to_learn,
             "preparation_difficulty": prep_difficulty,
-            "recommended_build_direction": direction
+            "recommended_build_direction": structured_build_direction
         }

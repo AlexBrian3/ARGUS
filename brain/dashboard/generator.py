@@ -9,26 +9,31 @@ from pathlib import Path
 import json
 from brain.config import DASHBOARD_DIR
 from brain.db.database import Database
+from brain.engines.benefits import BenefitsTracker
+from brain.engines.jobs import JobsScout
 
 DASHBOARD_FILE = DASHBOARD_DIR / "dashboard.html"
 
 
 def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
     db = Database()
+    benefits_tracker = BenefitsTracker(db)
+    jobs_scout = JobsScout(db)
+
     ecosystems = db.get_all_ecosystems()
     sponsors = db.get_all_sponsors()
-    opportunities = db.get_all_opportunities(limit=25)
+    opportunities = db.get_all_opportunities(limit=30)
     alerts = db.get_recent_alerts(limit=15)
     trends = db.get_all_trends()
     content_opps = db.get_all_content_opportunities()
+    benefits = benefits_tracker.get_ranked_benefits()
+    jobs = jobs_scout.get_all_ranked_listings()
+    fresh_jobs = jobs_scout.get_fresh_listings(hours=24)
 
-    # Serialize data for JavaScript injection
-    eco_json = json.dumps(ecosystems)
-    opp_json = json.dumps(opportunities)
-    sponsor_json = json.dumps(sponsors)
-    alert_json = json.dumps(alerts)
-    trends_json = json.dumps(trends)
-    content_json = json.dumps(content_opps)
+    total_benefits_pool = sum(b.get("amount_usd", 0) for b in benefits)
+    watchlist_count = sum(1 for e in ecosystems if e.get("maturity_stage") == "watchlist")
+    emerging_count = sum(1 for e in ecosystems if e.get("maturity_stage") == "emerging")
+    established_count = sum(1 for e in ecosystems if e.get("maturity_stage") == "established")
 
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -84,44 +89,63 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
     </header>
 
     <!-- Key Metrics Banner -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="glass-card rounded-xl p-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="glass-card rounded-xl p-3.5">
         <div class="text-xs font-medium text-gray-400">Monitored Ecosystems</div>
         <div class="text-2xl font-bold text-blue-400 mt-1">{len(ecosystems)}</div>
-        <div class="text-xs text-emerald-400 mt-0.5">Top: Solana & Base</div>
+        <div class="text-[11px] text-gray-400 mt-0.5">{established_count} est · {emerging_count} emg · {watchlist_count} watch</div>
       </div>
-      <div class="glass-card rounded-xl p-4">
-        <div class="text-xs font-medium text-gray-400">Active Opportunities</div>
+      <div class="glass-card rounded-xl p-3.5">
+        <div class="text-xs font-medium text-gray-400">Active Hackathons</div>
         <div class="text-2xl font-bold text-indigo-400 mt-1">{len(opportunities)}</div>
-        <div class="text-xs text-indigo-300 mt-0.5">$4.7M+ Aggregate Pool</div>
+        <div class="text-[11px] text-indigo-300 mt-0.5">$4.7M+ Aggregate Pool</div>
       </div>
-      <div class="glass-card rounded-xl p-4">
+      <div class="glass-card rounded-xl p-3.5">
         <div class="text-xs font-medium text-gray-400">Actionable Edge Alerts</div>
         <div class="text-2xl font-bold text-emerald-400 mt-1">{sum(1 for o in opportunities if o.get('alert_level') == 3)}</div>
-        <div class="text-xs text-emerald-300 mt-0.5">High Skill-Match & EV</div>
+        <div class="text-[11px] text-emerald-300 mt-0.5">High Skill-Match & EV</div>
       </div>
-      <div class="glass-card rounded-xl p-4">
+      <div class="glass-card rounded-xl p-3.5">
+        <div class="text-xs font-medium text-gray-400">Standing Benefits Pool</div>
+        <div class="text-2xl font-bold text-amber-400 mt-1">${total_benefits_pool / 1000:,.0f}k+</div>
+        <div class="text-[11px] text-amber-300 mt-0.5">{len(benefits)} rolling grants/credits</div>
+      </div>
+      <div class="glass-card rounded-xl p-3.5">
+        <div class="text-xs font-medium text-gray-400">Fresh Web3/AI Jobs</div>
+        <div class="text-2xl font-bold text-cyan-400 mt-1">{len(fresh_jobs)}</div>
+        <div class="text-[11px] text-cyan-300 mt-0.5">&lt;24h first signal ({len(jobs)} total)</div>
+      </div>
+      <div class="glass-card rounded-xl p-3.5">
         <div class="text-xs font-medium text-gray-400">Sponsor Profiles</div>
         <div class="text-2xl font-bold text-purple-400 mt-1">{len(sponsors)}</div>
-        <div class="text-xs text-purple-300 mt-0.5">Predictability &gt; 88%</div>
+        <div class="text-[11px] text-purple-300 mt-0.5">Predictability &gt; 88%</div>
       </div>
     </div>
 
     <!-- Main Navigation Tabs -->
     <div class="flex gap-2 border-b border-gray-800 pb-2 overflow-x-auto text-sm">
-      <button onclick="switchTab('edge')" id="tab-edge" class="px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30">
+      <button onclick="switchTab('edge')" id="tab-edge" class="px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30 whitespace-nowrap">
         🟢 Actionable Edge
       </button>
-      <button onclick="switchTab('radar')" id="tab-radar" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
-        📡 Ecosystem Radar
+      <button onclick="switchTab('ecosystems')" id="tab-ecosystems" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
+        🌐 Ecosystem Discovery
       </button>
-      <button onclick="switchTab('sponsors')" id="tab-sponsors" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+      <button onclick="switchTab('benefits')" id="tab-benefits" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
+        🎁 Benefits & Perks
+      </button>
+      <button onclick="switchTab('jobs')" id="tab-jobs" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
+        💼 Jobs & Internships
+      </button>
+      <button onclick="switchTab('radar')" id="tab-radar" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
+        📡 Momentum Radar
+      </button>
+      <button onclick="switchTab('sponsors')" id="tab-sponsors" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
         💼 Sponsor Intelligence
       </button>
-      <button onclick="switchTab('trends')" id="tab-trends" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+      <button onclick="switchTab('trends')" id="tab-trends" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
         📈 Emerging Trends
       </button>
-      <button onclick="switchTab('content')" id="tab-content" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200">
+      <button onclick="switchTab('content')" id="tab-content" class="px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap">
         📱 Content Studio
       </button>
     </div>
@@ -136,6 +160,14 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
         badge_color = "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" if lvl == 3 else "border-amber-500/40 bg-amber-500/10 text-amber-300"
         badge_text = "🟢 Level 3 — Actionable Edge" if lvl == 3 else "🟠 Level 2 — Confirmed"
         prize_str = f"${opp.get('total_prize_usd', 0):,.0f}"
+
+        raw_direction = opp.get("recommended_build_direction")
+        if isinstance(raw_direction, dict):
+            build_everyone = raw_direction.get("what_everyone_else_will_build", "Generic boilerplate CRUD or basic AI wrapper.")
+            build_advantage = raw_direction.get("your_unfair_advantage_build", "Deep infrastructure / autonomous agent integration.")
+        else:
+            build_everyone = "Standard generic entries, boilerplate CRUD, surface-level AI wrappers."
+            build_advantage = str(raw_direction or "High-conviction custom architectural implementation.")
 
         html_content += f"""
         <div class="glass-card rounded-xl p-5 hover:border-blue-500/40 transition">
@@ -183,14 +215,24 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
             </div>
           </div>
 
-          <!-- Unfair Build Direction -->
-          <div class="mt-3 p-3 rounded-lg bg-blue-950/20 border border-blue-500/20">
-            <div class="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
-              <span>⚡</span> RECOMMENDED UNFAIR ADVANTAGE BUILD:
+          <!-- Structured Build-Edge Differentiation -->
+          <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3 rounded-lg bg-rose-950/20 border border-rose-500/20">
+              <div class="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                <span>👥</span> WHAT EVERYONE ELSE WILL BUILD:
+              </div>
+              <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+                {build_everyone}
+              </p>
             </div>
-            <p class="text-xs text-gray-300 mt-1 leading-relaxed">
-              {opp.get('recommended_build_direction', '')}
-            </p>
+            <div class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/20">
+              <div class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                <span>⚡</span> YOUR UNFAIR ADVANTAGE BUILD:
+              </div>
+              <p class="text-xs text-emerald-200 mt-1 leading-relaxed font-medium">
+                {build_advantage}
+              </p>
+            </div>
           </div>
 
           <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
@@ -210,7 +252,188 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
       </div>
     </section>
 
-    <!-- TAB 2: ECOSYSTEM RADAR -->
+    <!-- TAB 2: ECOSYSTEM DISCOVERY (ENGINE 11) -->
+    <section id="content-ecosystems" class="hidden space-y-4">
+      <div class="flex flex-wrap gap-2 text-xs">
+        <span class="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">60 Ecosystems Monitored</span>
+        <span class="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">Watchlist Stage (Early Stealth)</span>
+        <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Emerging Stage (&gt;70 Momentum)</span>
+        <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Established Stage (&gt;85 Momentum)</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+"""
+
+    for eco in ecosystems:
+        stage = eco.get("maturity_stage", "established")
+        if stage == "watchlist":
+            stage_badge = "bg-rose-500/20 text-rose-300 border-rose-500/30"
+            stage_label = "👁️ Watchlist"
+        elif stage == "emerging":
+            stage_badge = "bg-amber-500/20 text-amber-300 border-amber-500/30"
+            stage_label = "🚀 Emerging"
+        else:
+            stage_badge = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+            stage_label = "🏛️ Established"
+
+        score = eco.get("momentum_score", 0.0)
+
+        html_content += f"""
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold border {stage_badge}">{stage_label}</span>
+              <span class="text-xs font-mono font-bold text-blue-400">{score:.1f}/100</span>
+            </div>
+            <h3 class="text-base font-bold text-gray-100 mt-2">{eco.get('name')}</h3>
+            <span class="text-xs text-gray-400">{eco.get('category')}</span>
+            <p class="text-xs text-gray-300 mt-2 leading-relaxed">
+              {eco.get('notes', '')}
+            </p>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-800 text-[11px] text-gray-500 flex justify-between">
+            <span>Stage: <strong class="text-gray-400 capitalize">{stage}</strong></span>
+            <span>Trajectory: <strong class="text-gray-400">{eco.get('momentum_trajectory', 'Stable →')}</strong></span>
+          </div>
+        </div>
+        """
+
+    html_content += """
+      </div>
+    </section>
+
+    <!-- TAB 3: BENEFITS & PERKS (ENGINE 12) -->
+    <section id="content-benefits" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-gray-100">Standing Ecosystem Benefits, Rolling Grants & Perks</h2>
+          <p class="text-xs text-gray-400">Non-dilutive capital, node RPC credits, cloud vouchers, and micro-grants available outside hackathons.</p>
+        </div>
+        <span class="px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+          Ranked by User Profile Fit
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+"""
+
+    for ben in benefits:
+        amt_str = f"${ben.get('amount_usd', 0):,}"
+        app_url = ben.get("application_url", "#")
+        fit_score = ben.get("user_fit_score", 0.0)
+
+        html_content += f"""
+        <div class="glass-card rounded-xl p-5 hover:border-amber-500/30 transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+              <div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                  {ben.get('category')}
+                </span>
+                <h3 class="text-base font-bold text-gray-100 mt-1">{ben.get('title')}</h3>
+                <span class="text-xs text-gray-400 font-medium">Ecosystem: {ben.get('ecosystem')}</span>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-bold text-emerald-400">{amt_str}</div>
+                <div class="text-xs text-gray-400">Fit: <strong class="text-purple-300">{fit_score:.1f}%</strong></div>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-300 mt-3 leading-relaxed">
+              {ben.get('description', '')}
+            </p>
+
+            <div class="mt-3 p-2.5 rounded bg-gray-900/60 border border-gray-800 text-xs">
+              <span class="text-blue-300 font-semibold">Eligibility Criteria:</span>
+              <p class="text-gray-300 mt-0.5 leading-normal">{ben.get('eligibility', 'Open to active ecosystem builders.')}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
+            <span class="text-xs text-gray-500">Fast rolling evaluation</span>
+            <a href="{app_url}" target="_blank" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition">
+              Apply Now ↗
+            </a>
+          </div>
+        </div>
+        """
+
+    html_content += """
+      </div>
+    </section>
+
+    <!-- TAB 4: JOBS & INTERNSHIPS (ENGINE 13) -->
+    <section id="content-jobs" class="hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-800 pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-gray-100">Fresh Web3/AI Jobs & Internships</h2>
+          <p class="text-xs text-gray-400">Scouted as early as they come (&lt;24 hours). Filtered against your Python, TypeScript, smart contract & agent skills.</p>
+        </div>
+        <span class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono">
+          First Signal Radar
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+"""
+
+    for job in jobs:
+        is_fresh_badge = job.get("is_fresh", False)
+        fresh_markup = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">🔥 &lt;24H FRESH</span>' if is_fresh_badge else '<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-800 text-gray-400">Standard</span>'
+        apply_url = job.get("apply_url", "#")
+        match_score = job.get("skill_match_score", 0.0)
+
+        html_content += f"""
+        <div class="glass-card rounded-xl p-5 hover:border-cyan-500/30 transition flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2.5">
+              <div>
+                <div class="flex items-center gap-2">
+                  {fresh_markup}
+                  <span class="text-xs text-gray-400">{job.get('company')} • {job.get('ecosystem')}</span>
+                </div>
+                <h3 class="text-base font-bold text-gray-100 mt-1">{job.get('title')}</h3>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-gray-400">Skill Match</span>
+                <div class="text-lg font-bold text-purple-400">{match_score:.0f}%</div>
+              </div>
+            </div>
+
+            <div class="mt-3 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Compensation:</span>
+                <span class="text-emerald-400 font-semibold">{job.get('compensation', 'Competitive')}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Location:</span>
+                <span class="text-gray-200">{job.get('location', 'Remote')}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-400">Source:</span>
+                <span class="text-cyan-400 font-mono">{job.get('source', 'radar')}</span>
+              </div>
+            </div>
+
+            <p class="text-xs text-gray-300 mt-3 leading-relaxed">
+              {job.get('description', '')}
+            </p>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
+            <span class="text-[11px] text-gray-500">Direct Founder / Ecosystem Listing</span>
+            <a href="{apply_url}" target="_blank" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition">
+              Apply Early ↗
+            </a>
+          </div>
+        </div>
+        """
+
+    html_content += """
+      </div>
+    </section>
+
+    <!-- TAB 5: ECOSYSTEM RADAR -->
     <section id="content-radar" class="hidden space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 """
@@ -381,16 +604,18 @@ def generate_dashboard_html(output_path: Path = DASHBOARD_FILE) -> Path:
 
   <script>
     function switchTab(tabName) {
-      const tabs = ['edge', 'radar', 'sponsors', 'trends', 'content'];
+      const tabs = ['edge', 'ecosystems', 'benefits', 'jobs', 'radar', 'sponsors', 'trends', 'content'];
       tabs.forEach(t => {
         const btn = document.getElementById('tab-' + t);
         const sec = document.getElementById('content-' + t);
-        if (t === tabName) {
-          btn.className = 'px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30';
-          sec.classList.remove('hidden');
-        } else {
-          btn.className = 'px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200';
-          sec.classList.add('hidden');
+        if (btn && sec) {
+          if (t === tabName) {
+            btn.className = 'px-4 py-2 rounded-lg font-medium bg-blue-600/20 text-blue-400 border border-blue-500/30 whitespace-nowrap';
+            sec.classList.remove('hidden');
+          } else {
+            btn.className = 'px-4 py-2 rounded-lg font-medium text-gray-400 hover:text-gray-200 whitespace-nowrap';
+            sec.classList.add('hidden');
+          }
         }
       });
     }
